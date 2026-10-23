@@ -45,21 +45,25 @@ jobs:
           name: ATVCleaner
           path: dist/ATVCleaner.exe
 
-      # Релиз называется по __version__ из atv_cleaner.py. Новая версия создаёт
-      # новый релиз, та же версия обновляет exe в существующем.
-      - name: Версия
+      # Обычный пуш только проверяет сборку: exe лежит в артефактах запуска.
+      # Релиз создаётся, только когда в сообщении коммита есть [release]
+      # или сборка запущена вручную (Actions -> Run workflow).
+      - name: Версия и заметки
         id: ver
+        if: contains(github.event.head_commit.message, '[release]') || github.event_name == 'workflow_dispatch'
         shell: pwsh
         run: |
           $v = python -c "import atv_cleaner; print(atv_cleaner.__version__)"
           "version=$v" >> $env:GITHUB_OUTPUT
+          python -c "import re,sys; t=open('CHANGELOG.md',encoding='utf-8').read(); m=re.search(r'^## ' + re.escape(sys.argv[1]) + r'\b.*?\n(.*?)(?=^## |\Z)', t, re.S | re.M); open('notes.md','w',encoding='utf-8').write(m.group(1).strip() if m else '')" $v
 
       - name: Релиз
-        if: github.ref == 'refs/heads/main'
+        if: steps.ver.outcome == 'success'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.ver.outputs.version }}
           name: ATV Cleaner ${{ steps.ver.outputs.version }}
+          body_path: notes.md
           target_commitish: ${{ github.sha }}
           make_latest: true
           files: dist/ATVCleaner.exe
