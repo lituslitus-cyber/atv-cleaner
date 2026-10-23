@@ -37,7 +37,7 @@ ATV Cleaner: очистка телевизоров и приставок на An
     python atv_cleaner.py --dry-run             # только показать
 """
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 
 import argparse
 import datetime
@@ -208,6 +208,12 @@ BACKGROUND_HINT = re.compile(r"cast|miracast|airplay|airscreen|dlna|mirror|"
 # FallbackHome из «Настроек» показывается только пока система загружается.
 # Если, кроме него, лаунчеров не осталось, ТВ висит на «Android запускается».
 FALLBACK_HOME = {"android", "com.android.settings", "com.android.tv.settings"}
+
+# Служебные пакеты, которые тоже объявляют себя «домашним экраном», но
+# лаунчерами не являются: заводской тест Xiaomi (com.duokan.factorytest),
+# мастер настройки, демо-режим магазина. Их нельзя считать запасным
+# лаунчером и нельзя предлагать сделать домашним.
+NOT_LAUNCHER = re.compile(r"factory|test|setup|provision|demo|retail", re.I)
 
 SYSTEM_UIDS = {"android.uid.system", "android.uid.phone",
                "android.uid.bluetooth", "android.uid.nfc", "android.uid.shell",
@@ -408,7 +414,8 @@ def query(category):
 
 def home_components():
     return [c for c in full_components(query("HOME"))
-            if c.split("/")[0] not in FALLBACK_HOME]
+            if c.split("/")[0] not in FALLBACK_HOME
+            and not NOT_LAUNCHER.search(c.split("/")[0])]
 
 
 def home_packages(installed):
