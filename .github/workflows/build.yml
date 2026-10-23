@@ -1,0 +1,53 @@
+name: Сборка Windows-программы
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Установка PyInstaller
+        run: pip install pyinstaller==6.11.1
+
+      - name: Скачивание ADB
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://dl.google.com/android/repository/platform-tools-latest-windows.zip -OutFile pt.zip
+          Expand-Archive pt.zip -DestinationPath pt
+          New-Item -ItemType Directory platform-tools | Out-Null
+          Copy-Item pt/platform-tools/adb.exe, pt/platform-tools/AdbWinApi.dll, pt/platform-tools/AdbWinUsbApi.dll platform-tools/
+          platform-tools/adb.exe version
+
+      - name: Сборка exe
+        run: pyinstaller --onefile --windowed --name XiaomiTVCleaner --add-data "platform-tools;platform-tools" gui.py
+
+      - name: Проверка, что модули собраны
+        shell: pwsh
+        run: |
+          python -c "import gui, xiaomi_tv_cleanup"
+          if (-not (Test-Path dist/XiaomiTVCleaner.exe)) { exit 1 }
+          "{0:N1} МБ" -f ((Get-Item dist/XiaomiTVCleaner.exe).Length / 1MB)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: XiaomiTVCleaner
+          path: dist/XiaomiTVCleaner.exe
+
+      - name: Релиз
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/XiaomiTVCleaner.exe

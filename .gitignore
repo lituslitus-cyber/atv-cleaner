@@ -1,0 +1,8 @@
+__pycache__/
+build/
+dist/
+*.spec
+platform-tools/
+platform-tools.zip
+backup_*/
+last_ip.txt
