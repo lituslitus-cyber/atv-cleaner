@@ -38,6 +38,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.request
 import zipfile
@@ -825,6 +826,84 @@ def rollback(listfile, only=None):
     return n
 
 
+# ---------------------------------------------------------------------------
+# Установка APK
+# ---------------------------------------------------------------------------
+
+INSTALL_ERRORS = {
+    "INSTALL_FAILED_OLDER_SDK": "приложению нужна более новая версия Android",
+    "INSTALL_FAILED_NO_MATCHING_ABIS": "сборка не для этого процессора, нужна "
+                                       "версия для ARM (armeabi-v7a или arm64-v8a)",
+    "INSTALL_FAILED_INSUFFICIENT_STORAGE": "на телевизоре не хватает места",
+    "INSTALL_FAILED_UPDATE_INCOMPATIBLE": "уже установлена версия с другой "
+                                          "подписью: сначала удалите её",
+    "INSTALL_FAILED_VERSION_DOWNGRADE": "на телевизоре уже стоит более новая версия",
+    "INSTALL_FAILED_ALREADY_EXISTS": "приложение уже установлено",
+    "INSTALL_PARSE_FAILED": "файл повреждён или это не APK",
+    "INSTALL_FAILED_INVALID_APK": "файл повреждён или это не APK",
+    "INSTALL_FAILED_MISSING_SPLIT": "это часть приложения: нужен полный "
+                                    "комплект (.apks или .xapk)",
+    "INSTALL_FAILED_USER_RESTRICTED": "установку запретили на телевизоре",
+    "INSTALL_FAILED_VERIFICATION_FAILURE": "установку заблокировала проверка "
+                                           "Google Play Защиты",
+}
+
+
+def explain_install_error(out):
+    for code, text in INSTALL_ERRORS.items():
+        if code in out:
+            return f"{text} ({code})"
+    m = re.search(r"Failure \[([^\]]+)\]", out)
+    return m.group(1) if m else (out.strip().splitlines() or ["нет ответа"])[-1]
+
+
+def install_one(path):
+    """Ставит .apk, .apks или .xapk. Возвращает (успех, сообщение)."""
+    if not os.path.isfile(path):
+        return False, "файл не найден"
+    ext = os.path.splitext(path)[1].lower()
+    if ext == ".apk":
+        rc, out = adb("install", "-r", path, timeout=900)
+    elif ext in (".apks", ".xapk", ".apkm", ".zip"):
+        # Наборы из базового APK и частей: распаковываем и ставим вместе.
+        with tempfile.TemporaryDirectory() as tmp:
+            try:
+                with zipfile.ZipFile(path) as z:
+                    names = [n for n in z.namelist()
+                             if n.lower().endswith(".apk") and "/" not in n.strip("/")]
+                    for n in names:
+                        z.extract(n, tmp)
+            except zipfile.BadZipFile:
+                return False, "архив повреждён"
+            if not names:
+                return False, "внутри нет APK-файлов"
+            apks = [os.path.join(tmp, n) for n in names]
+            rc, out = (adb("install-multiple", "-r", *apks, timeout=900)
+                       if len(apks) > 1 else adb("install", "-r", apks[0], timeout=900))
+    else:
+        return False, "поддерживаются .apk, .apks и .xapk"
+    if "Success" in out:
+        return True, ""
+    return False, explain_install_error(out)
+
+
+def install_apks(paths):
+    """Ставит файлы по очереди. Возвращает (сколько успешно, новые лаунчеры)."""
+    before = list_packages()
+    ok = 0
+    for path in paths:
+        print(f"Устанавливаю {os.path.basename(path)}...")
+        good, msg = install_one(path)
+        ok += good
+        print(f"  {'✔ установлено' if good else '✖ ' + msg}")
+    new = list_packages() - before
+    if new:
+        print("Новые приложения: " + ", ".join(sorted(new)))
+    launchers = sorted(new & {c.split("/")[0] for c in home_components()})
+    print(f"Установлено: {ok} из {len(paths)}.")
+    return ok, launchers
+
+
 def shutdown_adb():
     run([ADB, "kill-server"], timeout=15)
 
@@ -841,12 +920,22 @@ def main():
                     help="считать неиспользуемым, если не запускалось столько дней (90)")
     ap.add_argument("--dry-run", action="store_true", help="только показать, ничего не удалять")
     ap.add_argument("--restore", metavar="FILE", help="вернуть пакеты из бэкапа removed.txt")
+    ap.add_argument("--install", metavar="APK", nargs="+",
+                    help="установить на ТВ файлы .apk / .apks / .xapk")
     args = ap.parse_args()
     ADB = args.adb
 
     pick_device(args)
     model, android = device_info()
     print(f"\nУстройство: {model} (Android {android}, {SERIAL})")
+
+    if args.install:
+        ok, launchers = install_apks(args.install)
+        for p in launchers:
+            if yes(f"{p} — это лаунчер. Сделать его домашним?"):
+                set_home(p)
+                break
+        return
 
     if args.restore:
         rollback(args.restore)

@@ -83,11 +83,14 @@ class App(tk.Tk):
                                    command=self.check_boot)
         self.btn_restore = ttk.Button(actions, text="↩ Восстановить из бэкапа",
                                       command=self.restore)
-        self.btn_folder = ttk.Button(actions, text="📁 Папка бэкапов",
-                                     command=self.open_folder)
-        for b in (self.btn_scan, self.btn_remove, self.btn_boot,
-                  self.btn_restore, self.btn_folder):
+        for b in (self.btn_scan, self.btn_remove, self.btn_boot, self.btn_restore):
             b.pack(side="left", padx=(0, 6))
+        self.btn_folder = ttk.Button(conn, text="📁 Папка бэкапов",
+                                     command=self.open_folder)
+        self.btn_folder.pack(side="right", padx=(0, 8))
+        self.btn_install = ttk.Button(conn, text="📦 Установить APK на ТВ",
+                                      command=self.install)
+        self.btn_install.pack(side="right", padx=6)
 
         home = ttk.Frame(self)
         home.pack(fill="x", **pad)
@@ -153,6 +156,7 @@ class App(tk.Tk):
         st(self.btn_scan, connected)
         st(self.btn_remove, scanned and bool(self.checked))
         st(self.btn_boot, connected)
+        st(self.btn_install, connected)
         st(self.btn_restore, connected)
         st(self.btn_home, scanned)
         self.btn_remove.configure(text=f"🗑 Удалить отмеченное ({len(self.checked)})")
@@ -383,15 +387,8 @@ class App(tk.Tk):
 
     def apply_home(self):
         pkg = self._selected_home()
-        if not pkg:
-            return
-
-        def work():
-            ok = core.set_home(pkg)
-            print(f"\nДомашний экран: {pkg}" +
-                  ("" if ok else " (система может спросить при нажатии Home)"))
-            self.ctx["default_home"] = core.default_home()
-        self.run_bg(work, lambda r: self._fill_home())
+        if pkg:
+            self._make_home(pkg)
 
     def remove(self):
         ctx = self.ctx
@@ -479,6 +476,44 @@ class App(tk.Tk):
                                + (f" и домашний экран {old_home}" if old_home else "")
                                + "?"):
             self._rollback(path)
+
+    def install(self):
+        paths = filedialog.askopenfilenames(
+            title="Выберите приложения для установки на ТВ",
+            filetypes=[("Приложения Android", "*.apk *.apks *.xapk *.apkm"),
+                       ("Все файлы", "*.*")])
+        if not paths:
+            return
+
+        def work():
+            print()
+            ok, launchers = core.install_apks(list(paths))
+            return ok, launchers
+
+        def done(res):
+            if not res:
+                return
+            ok, launchers = res
+            for p in launchers:
+                if messagebox.askyesno(APP_TITLE, f"{p} — это лаунчер.\n\n"
+                                       "Сделать его домашним экраном?"):
+                    self._make_home(p)
+                    break
+            else:
+                messagebox.showinfo(APP_TITLE, f"Установлено: {ok} из {len(paths)}."
+                                    + ("" if ok == len(paths) else
+                                       "\nПричины ошибок смотрите в журнале."))
+        self.run_bg(work, done)
+
+    def _make_home(self, pkg):
+        def work():
+            ok = core.set_home(pkg)
+            print(f"\nДомашний экран: {pkg}" +
+                  ("" if ok else " (система может спросить при нажатии Home)"))
+            if self.ctx:
+                self.ctx["home"] = core.home_packages(self.ctx["installed"] | {pkg})
+                self.ctx["default_home"] = core.default_home()
+        self.run_bg(work, lambda r: self.ctx and self._fill_home())
 
     def open_folder(self):
         if os.name == "nt":
