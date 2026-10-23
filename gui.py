@@ -200,8 +200,8 @@ class App(tk.Tk):
             tree.tag_configure("warn", foreground=c["warn"])
             tree.tag_configure("block", foreground=c["block"])
             tree.tag_configure("off", foreground=c["muted"])
-        self.btn_theme.configure(text="☀ Светлая тема" if self.theme == "dark"
-                                 else "🌙 Тёмная тема")
+        self.btn_theme.configure(text="☀ Светлая" if self.theme == "dark"
+                                 else "🌙 Тёмная")
 
     # ---------------------------------------------------------------- интерфейс
 
@@ -338,14 +338,14 @@ class App(tk.Tk):
 
         frame = ttk.Frame(tab)
         frame.pack(fill="both", expand=True, **pad)
-        cols = ("kind", "state", "last", "note")
+        cols = ("desc", "kind", "state", "last", "note")
         self.app_tree = ttk.Treeview(frame, columns=cols, selectmode="browse")
-        for col, title, width in (("#0", "Приложение", 330), ("kind", "Тип", 90),
-                                  ("state", "Состояние", 95),
-                                  ("last", "Последний запуск", 150),
-                                  ("note", "Проверка", 300)):
+        for col, title, width in (("#0", "Приложение", 260), ("desc", "Что это", 190),
+                                  ("kind", "Тип", 85), ("state", "Состояние", 90),
+                                  ("last", "Запуск", 85),
+                                  ("note", "Проверка", 240)):
             self.app_tree.heading(col, text=title)
-            self.app_tree.column(col, width=width, stretch=col in ("#0", "note"))
+            self.app_tree.column(col, width=width, stretch=col in ("#0", "desc", "note"))
         sb = ttk.Scrollbar(frame, orient="vertical", command=self.app_tree.yview)
         self.app_tree.configure(yscrollcommand=sb.set)
         self.app_tree.pack(side="left", fill="both", expand=True)
@@ -717,6 +717,13 @@ class App(tk.Tk):
                 print(f"\n✔ Устройство загрузилось нормально, {msg}.")
                 messagebox.showinfo(APP_TITLE, f"Телевизор загрузился нормально.\n{msg}")
                 return
+            if good is None:
+                core.SERIAL = None
+                self.status.configure(text="нет связи после перезагрузки",
+                                      style="Warn.TLabel")
+                print(f"\n{msg}.")
+                messagebox.showinfo(APP_TITLE, msg + ".")
+                return
             print(f"\n✖ Проблема с загрузкой: {msg}.")
             if self.last_backup and messagebox.askyesno(
                     APP_TITLE, f"Проблема с загрузкой: {msg}.\n\n"
@@ -791,7 +798,7 @@ class App(tk.Tk):
         order = sorted(self.apps.values(), key=lambda a: (
             a["level"] == core.BLOCK, not a["user"], a["pkg"]))
         for a in order:
-            if needle and needle not in a["pkg"].lower():
+            if needle and needle not in (a["pkg"] + " " + a["desc"]).lower():
                 continue
             pkg, level = a["pkg"], a["level"]
             mark = (LOCKED if level == core.BLOCK else
@@ -799,7 +806,7 @@ class App(tk.Tk):
             last = a["last"][:10] if a["last"] else "ни разу"
             tags = (level,) if a["enabled"] else ("off",)
             tree.insert("", "end", iid=pkg, text=f"{mark} {pkg}", tags=tags,
-                        values=("стороннее" if a["user"] else "системное",
+                        values=(a["desc"], "стороннее" if a["user"] else "системное",
                                 "включено" if a["enabled"] else "отключено",
                                 last, self._note(level, a["reasons"])))
         self._update_buttons()
@@ -826,7 +833,8 @@ class App(tk.Tk):
             self.hint.configure(text=APPS_HINT)
             return
         kind = "стороннее приложение" if a["user"] else "системное приложение"
-        self.hint.configure(text=f"{a['pkg']}: {kind}, "
+        self.hint.configure(text=f"{a['pkg']}: " + (f"{a['desc']}, " if a["desc"] else "") +
+                            f"{kind}, "
                             f"{'включено' if a['enabled'] else 'отключено'}" +
                             "".join(f"\n• {r}" for r in a["reasons"]))
 

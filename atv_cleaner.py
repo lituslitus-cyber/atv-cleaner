@@ -37,7 +37,7 @@ ATV Cleaner: очистка телевизоров и приставок на An
     python atv_cleaner.py --dry-run             # только показать
 """
 
-__version__ = "1.2.1"
+__version__ = "1.3.0"
 
 import argparse
 import datetime
@@ -146,12 +146,48 @@ CAUTION = {
     "com.xiaomi.mitv.upgrade": "перестанут приходить обновления прошивки",
     "com.xiaomi.mitv.updateservice": "перестанут приходить обновления прошивки",
     "com.xiaomi.tv.appupgrade": "системные приложения Xiaomi перестанут обновляться",
+    "com.xiaomi.wfdsinkhelperservice": "перестанет работать трансляция экрана на ТВ",
+    "com.mitv.milinkservice": "перестанут работать Mi Cast и пульт в телефоне",
+    "com.xiaomi.mitv.smartshare": "перестанет работать Mi Cast",
+    "com.xiaomi.mitv.tvmanager": "мнения расходятся: в одних списках отключают, "
+                                 "в других оставляют",
     "com.google.android.apps.mediashell": "не будет работать трансляция с телефона "
                                           "(Chromecast)",
     "com.android.tv": "на ТВ с антенной пропадут эфирные каналы",
     "com.mitv.tvlock": "если на ТВ стоит родительский PIN-код, он перестанет действовать",
     "com.google.android.tvrecommendations": "главный экран может стать пустым",
 }
+
+FEATURES.update({
+    "com.xiaomi.wfdsinkhelperservice": "Приём трансляции экрана (Miracast)",
+    "com.mitv.milinkservice": "Mi Cast и управление с телефона (приложение Mi Remote)",
+    "com.xiaomi.mitv.smartshare": "Mi Cast, трансляция с телефона",
+})
+APPS.update({
+    "com.xiaomi.mitv.manualhelp": "Руководство пользователя Xiaomi",
+})
+
+# Не трогать ни при каких условиях: что пакет делает по данным сообщества.
+KEEP = {
+    "com.mitv.livetv": "Live TV: через него работает переключение входов (HDMI, антенна)",
+    "com.mitv.livetv.ci_mediatek": "Live TV для MediaTek: входы HDMI и антенна",
+    "mitv.service": "основная системная служба Xiaomi",
+    "com.mitv.overseaservice": "служба глобальной прошивки Xiaomi, кнопка Netflix на пульте",
+    "com.xiaomi.tvqs.overseas": "панель быстрых настроек",
+    "com.mi.bluetooth": "сопряжение пульта",
+    "com.xiaomi.android.tvsetup.partnercustomizer": "кнопки Netflix и Mi на пульте",
+    "com.duokan.factorytest": "заводское тестовое меню Xiaomi, не мешает",
+}
+
+# Описания системных пакетов, которые встречаются, но в каталог не входят.
+DESCRIPTIONS = {
+    "com.mitv.toolhouse": "служебный пакет Xiaomi, назначение не описано",
+    "com.mitv.upgrader": "служебный пакет Xiaomi, похоже на обновление (не подтверждено)",
+    "com.xiaomi.mitv.scenemode": "режимы изображения Xiaomi (по названию, не подтверждено)",
+}
+
+# Пакеты, которые сами ставят рекламируемые приложения после обновлений.
+AUTOINSTALL = re.compile(r"^android\.autoinstalls\.config\.")
 
 GROUPS = [
     ("Мусор, реклама и телеметрия", JUNK),
@@ -470,11 +506,28 @@ def gather_context():
 
 
 def is_protected(pkg):
-    return any(p.search(pkg) for p in PROTECTED)
+    if AUTOINSTALL.search(pkg):
+        return False
+    return pkg in KEEP or any(p.search(pkg) for p in PROTECTED)
+
+def describe(pkg):
+    for table in (JUNK, APPS, FEATURES, STOCK_LAUNCHERS):
+        if pkg in table:
+            return table[pkg]
+    if pkg in PATCHWALL:
+        return "PatchWall, лаунчер Xiaomi"
+    if pkg in KEEP:
+        return KEEP[pkg][:1].upper() + KEEP[pkg][1:]
+    if AUTOINSTALL.search(pkg):
+        return "Автоустановка рекламируемых приложений"
+    return DESCRIPTIONS.get(pkg, "")
+
 
 
 def assess(pkg, ctx):
     """Проверка влияния на загрузку. Возвращает (уровень, причины)."""
+    if pkg in KEEP:
+        return BLOCK, [KEEP[pkg]]
     if is_protected(pkg):
         return BLOCK, ["системный компонент, нужен для работы ТВ"]
     level, reasons = OK, []
@@ -493,7 +546,11 @@ def assess(pkg, ctx):
         return BLOCK, ["persistent: система держит его запущенным всегда"]
     m = re.search(r"sharedUser=SharedUserSetting\{\w+ ([\w.]+)/", info)
     if m and m.group(1) in SYSTEM_UIDS:
-        return BLOCK, [f"работает с правами системы ({m.group(1)})"]
+        # Пакеты из каталога сообщество отключало без проблем, остальные — нет.
+        if not (pkg in JUNK or pkg in APPS or pkg in FEATURES or AUTOINSTALL.search(pkg)):
+            return BLOCK, [f"работает с правами системы ({m.group(1)})"]
+        warn(f"работает с правами системы ({m.group(1)}); в списках сообщества "
+             "отключается без проблем, но обязательно проверьте загрузку")
 
     if pkg in ctx["home"]:
         others = ctx["home"] - {pkg}
@@ -819,16 +876,26 @@ def check_boot(timeout=300):
     adb("reboot", timeout=20)
     time.sleep(15)
     deadline = time.time() + timeout
-    booted = False
+    booted = reachable = False
     while time.time() < deadline:
         if CONNECT_ADDR:
             adb_connect(CONNECT_ADDR)
         rc, out = adb("shell", "getprop sys.boot_completed", timeout=10)
+        if rc == 0:
+            reachable = True
         if out.strip() == "1":
             booted = True
             break
-        print("  ...ещё загружается")
+        print("  ...ещё загружается" if reachable else "  ...ТВ пока не отвечает")
         time.sleep(5)
+    if not reachable:
+        # На многих Xiaomi отладка по сети выключается после перезагрузки:
+        # это не значит, что ТВ не загрузился. Откатывать вслепую нельзя.
+        return None, ("ТВ не ответил по сети. На многих Xiaomi отладка по сети "
+                      "выключается после перезагрузки. Посмотрите на экран ТВ: "
+                      "если главный экран открылся, всё в порядке. Чтобы "
+                      "проверить и при необходимости вернуть пакеты, снова "
+                      "включите отладку по сети и нажмите «Подключить»")
     if not booted:
         return False, "система не сообщила о завершении загрузки"
 
@@ -868,9 +935,12 @@ def scan(ctx, days, include_patchwall=True, skip=()):
                          *assess(p, ctx)) for p in pw]))
     for title, catalog in GROUPS:
         found = [p for p in catalog if p in ctx["installed"]]
+        if catalog is JUNK:
+            found += sorted(p for p in ctx["installed"] if AUTOINSTALL.search(p))
         seen.update(catalog)
+        seen.update(found)
         if found:
-            groups.append((title, [(p, catalog[p], *assess(p, ctx)) for p in found]))
+            groups.append((title, [(p, describe(p), *assess(p, ctx)) for p in found]))
 
     print("Анализирую, какие приложения давно не запускались...")
     items = unused_apps(ctx, days, seen)
@@ -883,7 +953,8 @@ def scan(ctx, days, include_patchwall=True, skip=()):
                      and not is_protected(p))
     if unknown:
         groups.append(("Прочие пакеты Xiaomi (не из списка)",
-                       [(p, UNKNOWN_DESC, *assess(p, ctx)) for p in unknown]))
+                       [(p, describe(p) or UNKNOWN_DESC, *assess(p, ctx))
+                        for p in unknown]))
     return groups
 
 
@@ -923,6 +994,7 @@ def list_apps(ctx, include_system=False):
             continue
         level, reasons = assess(pkg, ctx)
         apps.append({"pkg": pkg, "user": user, "enabled": pkg not in ctx["disabled"],
+                     "desc": describe(pkg),
                      "last": last.get(pkg), "level": level, "reasons": reasons})
     return apps
 
@@ -934,6 +1006,12 @@ def home_button_warning(ctx, pkg):
     if any(p in ctx["installed"] for p in PATCHWALL):
         return ("На Xiaomi кнопка Home на пульте может по-прежнему открывать "
                 "PatchWall. Чтобы она открывала новый лаунчер, отключите PatchWall.")
+    stock = [p for p in STOCK_LAUNCHERS if p in ctx["installed"] and p != pkg]
+    if pkg not in STOCK_LAUNCHERS and stock:
+        return ("На некоторых Xiaomi кнопка Home открывает новый лаунчер, только "
+                f"когда штатный ({stock[0]}) отключён. Если после нажатия Home "
+                "открывается старый экран, отключите штатный лаунчер на вкладке "
+                "«Установленные приложения».")
     return None
 
 
@@ -1078,7 +1156,7 @@ def main():
     plan = choose_launcher(ctx)
     for n, (title, items) in enumerate(scan(ctx, args.days, include_patchwall=False), 1):
         plan += choose(f"{n}. {title}", items,
-                       allow_all=not all(i[1] == UNKNOWN_DESC for i in items))
+                       allow_all=not title.startswith("Прочие"))
 
     plan = validate_plan(list(dict.fromkeys(plan)), ctx)
     if not plan:
@@ -1120,6 +1198,10 @@ def main():
     good, msg = check_boot()
     if good:
         print(f"\n✔ Устройство загрузилось нормально, {msg}.")
+        return
+    if good is None:
+        print(f"\n{msg}. Вернуть пакеты: python atv_cleaner.py --restore "
+              f"\"{listfile}\"")
         return
     print(f"\n✖ Проблема с загрузкой: {msg}.")
     rollback(listfile, only=removed)
