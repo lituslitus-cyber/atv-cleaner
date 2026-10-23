@@ -33,6 +33,8 @@ ATV Cleaner: очистка телевизоров и приставок на An
     python atv_cleaner.py --dry-run             # только показать
 """
 
+__version__ = "1.0.0"
+
 import argparse
 import datetime
 import os

@@ -12,7 +12,7 @@ from tkinter import filedialog, messagebox, ttk
 
 import atv_cleaner as core
 
-APP_TITLE = "ATV Cleaner"
+APP_TITLE = f"ATV Cleaner {core.__version__}"
 UNCHECKED, CHECKED, LOCKED = "☐", "☑", "✖"
 HINT = ("Щелчок по пакету отмечает его, по группе отмечает всё безопасное "
         "в группе. ⚠ требует подтверждения, ✖ удалять нельзя.")

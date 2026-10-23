@@ -3,7 +3,6 @@ name: Сборка Windows-программы
 on:
   push:
     branches: [main]
-    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
@@ -13,9 +12,9 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -41,13 +40,26 @@ jobs:
           if (-not (Test-Path dist/ATVCleaner.exe)) { exit 1 }
           "{0:N1} МБ" -f ((Get-Item dist/ATVCleaner.exe).Length / 1MB)
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: ATVCleaner
           path: dist/ATVCleaner.exe
 
+      # Релиз называется по __version__ из atv_cleaner.py. Новая версия создаёт
+      # новый релиз, та же версия обновляет exe в существующем.
+      - name: Версия
+        id: ver
+        shell: pwsh
+        run: |
+          $v = python -c "import atv_cleaner; print(atv_cleaner.__version__)"
+          "version=$v" >> $env:GITHUB_OUTPUT
+
       - name: Релиз
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          name: ATV Cleaner ${{ steps.ver.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          make_latest: true
           files: dist/ATVCleaner.exe
