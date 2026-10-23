@@ -10,6 +10,7 @@ import sys
 import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
+from tkinter import font as tkfont
 
 import atv_cleaner as core
 
@@ -24,11 +25,13 @@ PALETTES = {
     "light": dict(bg="#f3f3f3", fg="#1f1f1f", field="#ffffff", alt="#e6e6e6",
                   border="#c7c7c7", select="#cce4f7", selfg="#000000",
                   muted="#5f6368", warn="#b35c00", block="#9aa0a6",
-                  good="#137333", bad="#c5221f", btn="#e3e3e3", hover="#d4d4d4"),
+                  good="#137333", bad="#c5221f", btn="#e3e3e3", hover="#d4d4d4",
+                  accent="#1a73e8"),
     "dark": dict(bg="#1f2023", fg="#e8eaed", field="#2a2b2f", alt="#26272b",
                  border="#3c4043", select="#36507a", selfg="#ffffff",
                  muted="#9aa0a6", warn="#f6ad55", block="#6b6f75",
-                 good="#81c995", bad="#f28b82", btn="#303136", hover="#3d3e43"),
+                 good="#81c995", bad="#f28b82", btn="#303136", hover="#3d3e43",
+                 accent="#8ab4f8"),
 }
 
 
@@ -84,9 +87,17 @@ def apply_theme(root, name):
     st.map("Treeview.Heading", background=[("active", c["hover"])])
     st.configure("TNotebook", background=c["bg"], bordercolor=c["border"])
     st.configure("TNotebook.Tab", background=c["alt"], foreground=c["muted"],
-                 padding=(14, 6), bordercolor=c["border"])
-    st.map("TNotebook.Tab", background=[("selected", c["field"])],
-           foreground=[("selected", c["fg"])])
+                 padding=(14, 5), bordercolor=c["border"], lightcolor=c["alt"])
+    # В clam выбранная вкладка получает свой отступ поменьше и выглядит ниже
+    # остальных. Делаем наоборот: выбранная выше, светлее и жирным шрифтом.
+    root._tab_font = tkfont.nametofont("TkDefaultFont").copy()
+    root._tab_font.configure(weight="bold")
+    st.map("TNotebook.Tab",
+           background=[("selected", c["field"]), ("active", c["hover"])],
+           foreground=[("selected", c["fg"])],
+           padding=[("selected", (14, 7))],
+           expand=[("selected", (1, 3, 1, 0))],
+           font=[("selected", root._tab_font)])
     for w in ("TCombobox", "TSpinbox", "TEntry"):
         st.configure(w, fieldbackground=c["field"], foreground=c["fg"],
                      background=c["btn"], arrowcolor=c["fg"], bordercolor=c["border"],
