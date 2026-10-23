@@ -823,13 +823,11 @@ def validate_plan(plan, ctx):
 # ---------------------------------------------------------------------------
 
 def device_label(model):
-    """Имя ТВ для папки бэкапа: своё название из настроек или модель.
+    """Модель ТВ для имени папки бэкапа.
 
     IP в имени не годится: роутер чаще всего выдаёт телевизору новый адрес.
     """
-    name = sh("settings get global device_name").strip()
-    if not name or name == "null":
-        name = model or sh("getprop ro.product.model").strip() or "TV"
+    name = model or sh("getprop ro.product.model").strip() or "TV"
     # Запрещённые в именах файлов Windows символы и пробелы -> «_».
     return re.sub(r'[<>:"/\\|?*\s]+', "_", name).strip("._") or "TV"
 
