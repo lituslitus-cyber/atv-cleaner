@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Оконная версия очистки Xiaomi TV. Вся работа с ТВ живёт в xiaomi_tv_cleanup."""
+"""ATV Cleaner, оконная версия. Вся работа с ТВ живёт в atv_cleaner."""
 
 import os
 import queue
@@ -10,9 +10,9 @@ import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
-import xiaomi_tv_cleanup as core
+import atv_cleaner as core
 
-APP_TITLE = "Очистка Xiaomi TV"
+APP_TITLE = "ATV Cleaner"
 UNCHECKED, CHECKED, LOCKED = "☐", "☑", "✖"
 HINT = ("Щелчок по пакету отмечает его, по группе отмечает всё безопасное "
         "в группе. ⚠ требует подтверждения, ✖ удалять нельзя.")

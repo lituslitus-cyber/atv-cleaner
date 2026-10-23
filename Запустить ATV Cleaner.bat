@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title Очистка Xiaomi TV
+title ATV Cleaner
 cd /d "%~dp0"
 
 set "PY="
@@ -23,6 +23,6 @@ if not defined PY (
     )
 )
 
-%PY% xiaomi_tv_cleanup.py %*
+%PY% atv_cleaner.py %*
 echo.
 pause

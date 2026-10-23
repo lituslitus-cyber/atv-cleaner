@@ -32,22 +32,22 @@ jobs:
           platform-tools/adb.exe version
 
       - name: Сборка exe
-        run: pyinstaller --onefile --windowed --name XiaomiTVCleaner --add-data "platform-tools;platform-tools" gui.py
+        run: pyinstaller --onefile --windowed --name ATVCleaner --add-data "platform-tools;platform-tools" gui.py
 
       - name: Проверка, что модули собраны
         shell: pwsh
         run: |
-          python -c "import gui, xiaomi_tv_cleanup"
-          if (-not (Test-Path dist/XiaomiTVCleaner.exe)) { exit 1 }
-          "{0:N1} МБ" -f ((Get-Item dist/XiaomiTVCleaner.exe).Length / 1MB)
+          python -c "import gui, atv_cleaner"
+          if (-not (Test-Path dist/ATVCleaner.exe)) { exit 1 }
+          "{0:N1} МБ" -f ((Get-Item dist/ATVCleaner.exe).Length / 1MB)
 
       - uses: actions/upload-artifact@v4
         with:
-          name: XiaomiTVCleaner
-          path: dist/XiaomiTVCleaner.exe
+          name: ATVCleaner
+          path: dist/ATVCleaner.exe
 
       - name: Релиз
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/XiaomiTVCleaner.exe
+          files: dist/ATVCleaner.exe

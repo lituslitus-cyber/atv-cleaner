@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Очистка телевизоров и приставок Xiaomi (и других Android TV / Google TV)
-от предустановленного мусора через ADB.
+ATV Cleaner: очистка телевизоров и приставок на Android TV / Google TV
+от предустановленного мусора через ADB. Сейчас подробнее всего описаны
+устройства Xiaomi (PatchWall, Mi Box). Другие марки добавляются пакетами
+в каталоги ниже (JUNK, APPS, FEATURES) и шаблонами в VENDOR_HINT.
 
 Что делает скрипт:
   * сам скачивает ADB, если его нет, и спрашивает IP телевизора;
@@ -18,17 +20,17 @@
 
 Удаление идёт через `pm uninstall -k --user 0`: системный APK остаётся в
 прошивке, пакет только скрывается. Вернуть всё можно так:
-    python xiaomi_tv_cleanup.py --restore <файл removed.txt>
+    python atv_cleaner.py --restore <файл removed.txt>
 или сбросом к заводским настройкам.
 
 Подготовка ТВ: Настройки -> Об устройстве -> 7 раз нажать на «Сборка»,
 затем в «Для разработчиков» включить «Отладка по USB» и «Отладка по сети»
 (названия пунктов зависят от модели).
 
-На Windows проще всего запускать файл «Запустить очистку ТВ.bat».
-    python xiaomi_tv_cleanup.py                       # спросит IP сам
-    python xiaomi_tv_cleanup.py --connect 192.168.1.50
-    python xiaomi_tv_cleanup.py --dry-run             # только показать
+На Windows проще всего запускать файл «Запустить ATV Cleaner.bat».
+    python atv_cleaner.py                       # спросит IP сам
+    python atv_cleaner.py --connect 192.168.1.50
+    python atv_cleaner.py --dry-run             # только показать
 """
 
 import argparse
@@ -62,6 +64,7 @@ NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 
 # ---------------------------------------------------------------------------
 # Каталог. Пакеты, которых нет на устройстве, просто не показываются.
+# Пакеты новых марок добавляются сюда же.
 # ---------------------------------------------------------------------------
 
 JUNK = {
@@ -648,7 +651,7 @@ def backup(plan, ctx, model):
     with open(listfile, "w", encoding="utf-8") as f:
         f.write(f"# {model}, {SERIAL}, {stamp}\n")
         f.write(f"# Домашний экран до очистки: {ctx['default_home']}\n")
-        f.write("# Восстановление: python xiaomi_tv_cleanup.py --restore "
+        f.write("# Восстановление: python atv_cleaner.py --restore "
                 f"\"{listfile}\"\n")
         for pkg in plan:
             kind = "user" if pkg in ctx["third_party"] else "system"
@@ -912,7 +915,7 @@ def shutdown_adb():
 
 def main():
     global ADB
-    ap = argparse.ArgumentParser(description="Очистка Xiaomi TV / Mi Box от мусора через ADB")
+    ap = argparse.ArgumentParser(description="ATV Cleaner: очистка Android TV / Google TV от мусора через ADB")
     ap.add_argument("--connect", metavar="IP", help="подключиться к ТВ по сети")
     ap.add_argument("-s", "--serial", help="серийный номер устройства из `adb devices`")
     ap.add_argument("--adb", default="adb", help="путь к adb")
@@ -984,7 +987,7 @@ def main():
 
     if not yes("\nПерезагрузить и проверить, что ТВ нормально загружается? "
                "(рекомендуется)"):
-        print(f"Если что-то пойдёт не так: python xiaomi_tv_cleanup.py "
+        print(f"Если что-то пойдёт не так: python atv_cleaner.py "
               f"--restore \"{listfile}\"")
         return
 
