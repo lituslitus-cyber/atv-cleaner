@@ -37,7 +37,7 @@ ATV Cleaner: очистка телевизоров и приставок на An
     python atv_cleaner.py --dry-run             # только показать
 """
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 import argparse
 import datetime
@@ -507,8 +507,8 @@ def assess(pkg, ctx):
     if pkg in CAUTION:
         warn(CAUTION[pkg])
     if pkg in ctx["third_party"]:
-        reasons.append("не системное: при удалении (не отключении) удалится "
-                       "полностью, APK сохраню в бэкап")
+        reasons.append("не системное: при удалении удалится полностью, "
+                       "APK сохраню в бэкап")
     return level, reasons
 
 
@@ -704,7 +704,11 @@ def backup(plan, ctx, model, method=DISABLE):
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     safe_serial = re.sub(r"[^\w.-]", "_", SERIAL or "device")
     folder = os.path.join(HERE, f"backup_{safe_serial}_{stamp}")
-    os.makedirs(folder, exist_ok=True)
+    n = 2
+    while os.path.exists(folder):  # две операции в одну секунду
+        folder = os.path.join(HERE, f"backup_{safe_serial}_{stamp}-{n}")
+        n += 1
+    os.makedirs(folder)
     listfile = os.path.join(folder, "removed.txt")
     with open(listfile, "w", encoding="utf-8") as f:
         f.write(f"# {model}, {SERIAL}, {stamp}\n")
@@ -733,8 +737,16 @@ def disable(pkg):
     return False, (out or "нет ответа") + " (можно попробовать режим «удалить»)"
 
 
-def uninstall(pkg):
-    out = sh(f"pm uninstall -k --user 0 {pkg}")
+def enable(pkg):
+    out = sh(f"pm enable --user 0 {pkg}")
+    if "enabled" in out.lower():
+        return True, ""
+    return False, out or "нет ответа"
+
+
+def uninstall(pkg, full=False):
+    """full=True для сторонних приложений: удалить совсем, а не для пользователя."""
+    out = sh(f"pm uninstall {pkg}" if full else f"pm uninstall -k --user 0 {pkg}")
     if "Success" in out:
         return True, ""
     # Некоторые прошивки не дают удалить, но позволяют отключить.
@@ -871,7 +883,11 @@ def scan(ctx, days, include_patchwall=True, skip=()):
 def perform_removal(plan, ctx, model, method=DISABLE):
     """Бэкап, смена лаунчера и отключение/удаление. -> (бэкап, обработанные)."""
     listfile = backup(plan, ctx, model, method)
-    action = disable if method == DISABLE else uninstall
+    if method == DISABLE:
+        action = disable
+    else:
+        def action(pkg):
+            return uninstall(pkg, full=pkg in ctx["third_party"])
     print(f"Бэкап: {listfile}")
     if ctx["new_home"]:
         set_home(ctx["new_home"])
@@ -888,6 +904,20 @@ def perform_removal(plan, ctx, model, method=DISABLE):
         print(f"Домашний экран: {ctx['new_home']}" + ("" if ok else
               " (система может один раз спросить, какой лаунчер использовать)"))
     return listfile, removed
+
+
+def list_apps(ctx, include_system=False):
+    """Установленные приложения для вкладки «Установленные приложения»."""
+    last, _ = usage_stats()
+    apps = []
+    for pkg in sorted(ctx["installed"] | ctx["disabled"]):
+        user = pkg in ctx["third_party"]
+        if not user and not include_system:
+            continue
+        level, reasons = assess(pkg, ctx)
+        apps.append({"pkg": pkg, "user": user, "enabled": pkg not in ctx["disabled"],
+                     "last": last.get(pkg), "level": level, "reasons": reasons})
+    return apps
 
 
 def home_button_warning(ctx, pkg):

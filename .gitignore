@@ -6,3 +6,4 @@ platform-tools/
 platform-tools.zip
 backup_*/
 last_ip.txt
+settings.json
