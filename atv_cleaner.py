@@ -13,15 +13,19 @@ ATV Cleaner: очистка телевизоров и приставок на An
     приложения, которые давно или ни разу не запускались;
   * до удаления проверяет, не сломает ли это загрузку: лаунчер, клавиатура,
     persistent- и системные пакеты, администраторы устройства;
-  * удаляет только то, что вы подтвердили, и сохраняет бэкап: список
-    пакетов и APK сторонних приложений;
+  * отключает (или, по выбору, удаляет) только то, что вы подтвердили,
+    и сохраняет бэкап: список пакетов и APK сторонних приложений;
   * по желанию перезагружает устройство и проверяет, что оно загрузилось
     до главного экрана. Если нет, возвращает всё назад.
 
-Удаление идёт через `pm uninstall -k --user 0`: системный APK остаётся в
-прошивке, пакет только скрывается. Вернуть всё можно так:
+По умолчанию пакеты отключаются (`pm disable-user --user 0`): приложение
+остаётся на месте, но не запускается. Так советуют делать на 4PDA и XDA,
+это полностью обратимо. Режим --uninstall удаляет пакеты для пользователя
+(`pm uninstall -k --user 0`). Вернуть всё можно так:
     python atv_cleaner.py --restore <файл removed.txt>
-или сбросом к заводским настройкам.
+После режима «удалить» не делайте сброс к заводским настройкам, пока не
+восстановите пакеты: на некоторых Xiaomi TV это, по сообщениям
+пользователей, приводило к циклической перезагрузке.
 
 Подготовка ТВ: Настройки -> Об устройстве -> 7 раз нажать на «Сборка»,
 затем в «Для разработчиков» включить «Отладка по USB» и «Отладка по сети»
@@ -33,7 +37,7 @@ ATV Cleaner: очистка телевизоров и приставок на An
     python atv_cleaner.py --dry-run             # только показать
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 import argparse
 import datetime
@@ -60,6 +64,7 @@ SERIAL = None
 CONNECT_ADDR = None
 
 OK, WARN, BLOCK = "ok", "warn", "block"
+DISABLE, UNINSTALL = "disable", "uninstall"
 
 # Чтобы в оконной программе на каждый вызов adb не мигала консоль.
 NO_WINDOW = 0x08000000 if os.name == "nt" else 0
@@ -76,6 +81,19 @@ JUNK = {
     "com.xiaomi.mitv.appstore": "Магазин приложений Xiaomi",
     "com.xiaomi.mitv.payment": "Платёжный сервис Xiaomi",
     "com.xiaomi.mitv.care": "Обратная связь Xiaomi",
+    "com.xiaomi.mitv.osstatistic": "Сбор статистики Xiaomi",
+    "com.miui.systemAdSolution": "Рекламный сервис Xiaomi",
+    "com.xiaomi.mitv.advertise": "Рекламный сервис Xiaomi",
+    "com.xiaomi.mitv.tvpush.tvpushservice": "Push-уведомления и реклама Xiaomi",
+    "com.xiaomi.floatingframe": "Всплывающие промо-окна Xiaomi",
+    "com.xm.webcontent": "Рекламный веб-контент Xiaomi",
+    "com.mitv.tvhome.mitvplus": "Рекламный ряд рекомендаций PatchWall",
+    "com.mitv.tvhome.michannel": "Каналы-рекомендации PatchWall",
+    "com.google.android.leanbacklauncher.recommendations": "Рекламный ряд рекомендаций лаунчера",
+    "com.google.android.tv.bugreportsender": "Отправка отчётов об ошибках в Google",
+    "com.xiaomi.mitv.shop": "Магазин Xiaomi",
+    "com.xiaomi.mitv.shop.mihome": "Магазин Mi Home",
+    "com.xiaomi.mitv.shop.tvshop": "ТВ-магазин Xiaomi",
     "com.google.android.feedback": "Отправка отзывов в Google",
     "com.android.printspooler": "Служба печати (на ТВ не нужна)",
     "com.android.dreams.basic": "Заставка «Цвета»",
@@ -96,21 +114,49 @@ APPS = {
     "com.mitv.gallery": "Галерея Xiaomi",
     "com.mitv.videoplayer": "Видеоплеер Xiaomi (файлы с USB)",
     "com.xiaomi.mitv.mediaexplorer": "Медиапроводник Xiaomi",
+    "com.xiaomi.tv.gallery": "Галерея Xiaomi",
+    "com.xiaomi.mimusic": "Xiaomi Music",
+    "com.xiaomi.mimusic2": "Xiaomi Music",
+    "com.mitv.dream": "Заставка Xiaomi",
+    "com.xiaomi.tweather": "Погода Xiaomi",
+    "com.xiaomi.smarthome.tv": "Умный дом Xiaomi",
+    "com.xiaomi.mibox.gamecenter": "Игровой центр Xiaomi",
+    "com.hulu.livingroomplus": "Hulu",
+    "com.sling": "Sling TV",
+    "com.pandora.android.atv": "Pandora",
+    "com.cbs.ott": "Paramount+ (CBS)",
+    "com.showtime.standalone": "Showtime",
+    "com.nousguide.android.rbtv": "Red Bull TV",
+    "air.com.vudu.air.DownloaderTablet": "Vudu",
 }
 
 FEATURES = {
-    "com.google.android.tv.remote.service": "Управление с телефона (Google TV)",
     "com.google.android.apps.mediashell": "Chromecast built-in (трансляция с телефона)",
     "com.google.android.tvrecommendations": "Рекомендации на главном экране",
     "com.google.android.marvin.talkback": "TalkBack (озвучивание экрана)",
     "com.android.tv": "Live Channels (на ТВ с эфирным тюнером не трогать)",
     "com.xiaomi.mitv.upgrade": "Обновления прошивки Xiaomi (OTA)",
+    "com.xiaomi.mitv.updateservice": "Служба обновлений Xiaomi",
+    "com.xiaomi.tv.appupgrade": "Обновление приложений Xiaomi",
+    "com.mitv.tvlock": "Родительский замок Xiaomi",
+}
+
+# Пакеты из каталога, которые требуют отдельного подтверждения.
+CAUTION = {
+    "com.xiaomi.mitv.upgrade": "перестанут приходить обновления прошивки",
+    "com.xiaomi.mitv.updateservice": "перестанут приходить обновления прошивки",
+    "com.xiaomi.tv.appupgrade": "системные приложения Xiaomi перестанут обновляться",
+    "com.google.android.apps.mediashell": "не будет работать трансляция с телефона "
+                                          "(Chromecast)",
+    "com.android.tv": "на ТВ с антенной пропадут эфирные каналы",
+    "com.mitv.tvlock": "если на ТВ стоит родительский PIN-код, он перестанет действовать",
+    "com.google.android.tvrecommendations": "главный экран может стать пустым",
 }
 
 GROUPS = [
     ("Мусор, реклама и телеметрия", JUNK),
     ("Предустановленные приложения", APPS),
-    ("Функции системы (удалять осознанно)", FEATURES),
+    ("Функции системы (убирать осознанно)", FEATURES),
 ]
 
 PATCHWALL = ("com.mitv.tvhome.atv", "com.mitv.tvhome")
@@ -145,7 +191,7 @@ PROTECTED = [re.compile(p) for p in (
     r"settings|systemui|framework|permission|provider|keystore|keychain",
     r"inputmethod|\.ime$|\.ime\.|keyboard",
     r"tvinput|hdmi|\bcec\b|tuner|dtv|tvplayer|tvserver|tvservice|"
-    r"bluetooth|wifi|network|remotecontrol|\.rc$|irservice",
+    r"bluetooth|wifi|network|remotecontrol|\.rc$|irservice|tv\.remote",
     r"webview|chrome",
     # Голосовой поиск: на Android TV это katniss, на Google TV и в прошивках
     # Xiaomi свои пакеты, поэтому защищаем всё, что похоже на голос и поиск.
@@ -390,11 +436,15 @@ def set_home(pkg):
 
 
 def gather_context():
-    installed = list_packages()
-    if not installed:
+    everything = list_packages()
+    if not everything:
         die("Не удалось получить список пакетов с устройства.")
+    disabled = list_packages("-d")
+    # Уже отключённые пакеты не предлагаем ещё раз.
+    installed = everything - disabled
     ctx = {
         "installed": installed,
+        "disabled": disabled,
         "third_party": list_packages("-3"),
         "home": home_packages(installed),
         "default_home": default_home(),
@@ -454,8 +504,11 @@ def assess(pkg, ctx):
             warn("текущая клавиатура, система переключится на другую")
     if pkg in ctx["accessibility"]:
         warn("включён как служба специальных возможностей")
+    if pkg in CAUTION:
+        warn(CAUTION[pkg])
     if pkg in ctx["third_party"]:
-        reasons.append("не системное: удалится полностью, APK сохраню в бэкап")
+        reasons.append("не системное: при удалении (не отключении) удалится "
+                       "полностью, APK сохраню в бэкап")
     return level, reasons
 
 
@@ -557,7 +610,7 @@ def choose(title, items, allow_all=True):
 
     hint = "[a] все доступные, " if allow_all else ""
     while True:
-        ans = ask(f"\nЧто удалить? {hint}номера через пробел, Enter: пропустить: ")
+        ans = ask(f"\nЧто убрать? {hint}номера через пробел, Enter: пропустить: ")
         if not ans:
             return []
         if allow_all and ans in ("a", "а", "all", "все"):
@@ -576,7 +629,7 @@ def choose(title, items, allow_all=True):
         result = []
         for pkg, desc, level, reasons in picked:
             if level == WARN and not yes(f"   {pkg}: {'; '.join(reasons)}. "
-                                         "Всё равно удалить?"):
+                                         "Всё равно убрать?"):
                 continue
             result.append(pkg)
         return result
@@ -596,6 +649,9 @@ def choose_launcher(ctx):
     for p in custom:
         if p != cur and yes(f"Найден сторонний лаунчер {p}. Сделать его домашним?"):
             ctx["new_home"] = p
+            note = home_button_warning(ctx, p)
+            if note:
+                print(note)
             break
     if not pw:
         return []
@@ -644,7 +700,7 @@ def validate_plan(plan, ctx):
 # Удаление, бэкап, восстановление
 # ---------------------------------------------------------------------------
 
-def backup(plan, ctx, model):
+def backup(plan, ctx, model, method=DISABLE):
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     safe_serial = re.sub(r"[^\w.-]", "_", SERIAL or "device")
     folder = os.path.join(HERE, f"backup_{safe_serial}_{stamp}")
@@ -657,9 +713,10 @@ def backup(plan, ctx, model):
                 f"\"{listfile}\"\n")
         for pkg in plan:
             kind = "user" if pkg in ctx["third_party"] else "system"
-            f.write(f"{pkg}\t{kind}\n")
+            f.write(f"{pkg}\t{kind}\t{method}\n")
     for pkg in plan:
-        if pkg not in ctx["third_party"]:
+        # Отключённое приложение остаётся на ТВ, его APK сохранять незачем.
+        if method == DISABLE or pkg not in ctx["third_party"]:
             continue
         dst = os.path.join(folder, pkg)
         os.makedirs(dst, exist_ok=True)
@@ -669,20 +726,33 @@ def backup(plan, ctx, model):
     return listfile
 
 
+def disable(pkg):
+    out = sh(f"pm disable-user --user 0 {pkg}")
+    if "disabled" in out.lower():
+        return True, ""
+    return False, (out or "нет ответа") + " (можно попробовать режим «удалить»)"
+
+
 def uninstall(pkg):
     out = sh(f"pm uninstall -k --user 0 {pkg}")
     if "Success" in out:
         return True, ""
     # Некоторые прошивки не дают удалить, но позволяют отключить.
-    out2 = sh(f"pm disable-user --user 0 {pkg}")
-    if "disabled" in out2.lower():
+    ok, _ = disable(pkg)
+    if ok:
         return True, "не удалился, но отключён"
-    return False, out or out2
+    return False, out
 
 
 def restore_packages(entries, folder):
     ok = 0
-    for pkg, kind in entries:
+    for pkg, kind, method in entries:
+        if method == DISABLE:
+            out = sh(f"pm enable --user 0 {pkg}")
+            good = "enabled" in out.lower()
+            ok += good
+            print(f"  {'✔' if good else '✖'} {pkg}" + ("" if good else f": {out}"))
+            continue
         if kind == "user":
             apks = []
             d = os.path.join(folder, pkg)
@@ -714,8 +784,9 @@ def read_backup(path):
             if m and m.group(1) != "None":
                 old_home = m.group(1)
             if line and not line.startswith("#"):
-                pkg, _, kind = line.partition("\t")
-                entries.append((pkg, kind or "system"))
+                # Старые бэкапы (1.0) без способа: тогда всё удалялось.
+                pkg, kind, method = (line.split("\t") + ["system", UNINSTALL])[:3]
+                entries.append((pkg, kind or "system", method or UNINSTALL))
     return entries, old_home
 
 
@@ -797,24 +868,36 @@ def scan(ctx, days, include_patchwall=True, skip=()):
     return groups
 
 
-def perform_removal(plan, ctx, model):
-    """Бэкап, смена лаунчера при необходимости и удаление. -> (бэкап, удалённые)."""
-    listfile = backup(plan, ctx, model)
+def perform_removal(plan, ctx, model, method=DISABLE):
+    """Бэкап, смена лаунчера и отключение/удаление. -> (бэкап, обработанные)."""
+    listfile = backup(plan, ctx, model, method)
+    action = disable if method == DISABLE else uninstall
     print(f"Бэкап: {listfile}")
     if ctx["new_home"]:
         set_home(ctx["new_home"])
     removed = []
     for pkg in plan:
-        good, note = uninstall(pkg)
+        good, note = action(pkg)
         print(f"  {'✔' if good else '✖'} {pkg}" + (f": {note}" if note else ""))
         if good:
             removed.append(pkg)
-    print(f"Удалено: {len(removed)} из {len(plan)}.")
+    print(f"{'Отключено' if method == DISABLE else 'Удалено'}: "
+          f"{len(removed)} из {len(plan)}.")
     if removed and ctx["new_home"]:
         ok = set_home(ctx["new_home"])
         print(f"Домашний экран: {ctx['new_home']}" + ("" if ok else
               " (система может один раз спросить, какой лаунчер использовать)"))
     return listfile, removed
+
+
+def home_button_warning(ctx, pkg):
+    """На Xiaomi кнопка Home зашита на PatchWall, пока он включён."""
+    if pkg in PATCHWALL:
+        return None
+    if any(p in ctx["installed"] for p in PATCHWALL):
+        return ("На Xiaomi кнопка Home на пульте может по-прежнему открывать "
+                "PatchWall. Чтобы она открывала новый лаунчер, отключите PatchWall.")
+    return None
 
 
 def rollback(listfile, only=None):
@@ -924,6 +1007,8 @@ def main():
     ap.add_argument("--days", type=int, default=90,
                     help="считать неиспользуемым, если не запускалось столько дней (90)")
     ap.add_argument("--dry-run", action="store_true", help="только показать, ничего не удалять")
+    ap.add_argument("--uninstall", action="store_true",
+                    help="удалять пакеты (pm uninstall --user 0), а не отключать")
     ap.add_argument("--restore", metavar="FILE", help="вернуть пакеты из бэкапа removed.txt")
     ap.add_argument("--install", metavar="APK", nargs="+",
                     help="установить на ТВ файлы .apk / .apks / .xapk")
@@ -970,7 +1055,7 @@ def main():
     if "com.google.android.apps.tv.launcherx" in ctx["installed"]:
         print(GOOGLE_TV_ADS_TIP)
 
-    print("\nБудут удалены:")
+    print("\nБудут " + ("удалены:" if args.uninstall else "отключены:"))
     for p in plan:
         print("  - " + p)
     if ctx["new_home"]:
@@ -978,12 +1063,14 @@ def main():
     if args.dry_run:
         print("\n--dry-run: ничего не удаляю.")
         return
-    if ask(f"\nУдалить {len(plan)} пакетов? Введите «да»: ") not in ("да", "yes"):
+    verb = "Удалить" if args.uninstall else "Отключить"
+    if ask(f"\n{verb} {len(plan)} пакетов? Введите «да»: ") not in ("да", "yes"):
         print("Отменено.")
         return
 
     print()
-    listfile, removed = perform_removal(plan, ctx, model)
+    listfile, removed = perform_removal(plan, ctx, model,
+                                       UNINSTALL if args.uninstall else DISABLE)
     if not removed:
         return
 
@@ -1000,8 +1087,7 @@ def main():
     print(f"\n✖ Проблема с загрузкой: {msg}.")
     rollback(listfile, only=removed)
     adb("reboot", timeout=20)
-    print("Устройство перезагружается. Если ADB был недоступен, поможет сброс "
-          "к заводским настройкам: он возвращает все системные пакеты.")
+    print("Устройство перезагружается.")
 
 
 if __name__ == "__main__":

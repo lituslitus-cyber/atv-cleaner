@@ -15,7 +15,7 @@ import atv_cleaner as core
 APP_TITLE = f"ATV Cleaner {core.__version__}"
 UNCHECKED, CHECKED, LOCKED = "☐", "☑", "✖"
 HINT = ("Щелчок по пакету отмечает его, по группе отмечает всё безопасное "
-        "в группе. ⚠ требует подтверждения, ✖ удалять нельзя.")
+        "в группе. ⚠ требует подтверждения, ✖ трогать нельзя.")
 
 
 class QueueWriter:
@@ -77,7 +77,7 @@ class App(tk.Tk):
         actions = ttk.Frame(self)
         actions.pack(fill="x", **pad)
         self.btn_scan = ttk.Button(actions, text="🔍 Найти мусор", command=self.scan)
-        self.btn_remove = ttk.Button(actions, text="🗑 Удалить отмеченное",
+        self.btn_remove = ttk.Button(actions, text="🧹 Отключить отмеченное",
                                      command=self.remove)
         self.btn_boot = ttk.Button(actions, text="🔄 Перезагрузить и проверить",
                                    command=self.check_boot)
@@ -85,6 +85,15 @@ class App(tk.Tk):
                                       command=self.restore)
         for b in (self.btn_scan, self.btn_remove, self.btn_boot, self.btn_restore):
             b.pack(side="left", padx=(0, 6))
+        mode = ttk.Frame(self)
+        mode.pack(fill="x", **pad)
+        ttk.Label(mode, text="Способ:").pack(side="left")
+        self.method = tk.StringVar(value=core.DISABLE)
+        ttk.Radiobutton(mode, text="Отключать (рекомендуется, легко вернуть)",
+                        value=core.DISABLE, variable=self.method,
+                        command=self._on_method).pack(side="left", padx=6)
+        ttk.Radiobutton(mode, text="Удалять", value=core.UNINSTALL,
+                        variable=self.method, command=self._on_method).pack(side="left")
         self.btn_folder = ttk.Button(conn, text="📁 Папка бэкапов",
                                      command=self.open_folder)
         self.btn_folder.pack(side="right", padx=(0, 8))
@@ -159,7 +168,18 @@ class App(tk.Tk):
         st(self.btn_install, connected)
         st(self.btn_restore, connected)
         st(self.btn_home, scanned)
-        self.btn_remove.configure(text=f"🗑 Удалить отмеченное ({len(self.checked)})")
+        verb = "Удалить" if self.method.get() == core.UNINSTALL else "Отключить"
+        self.btn_remove.configure(text=f"🧹 {verb} отмеченное ({len(self.checked)})")
+
+    def _on_method(self):
+        if self.method.get() == core.UNINSTALL and not messagebox.askyesno(
+                APP_TITLE, "Удаление менее обратимо, чем отключение.\n\n"
+                "После удаления не делайте сброс к заводским настройкам, пока не "
+                "восстановите пакеты из бэкапа: на некоторых Xiaomi TV это, по "
+                "сообщениям пользователей, приводило к циклической перезагрузке.\n\n"
+                "Всё равно удалять, а не отключать?"):
+            self.method.set(core.DISABLE)
+        self._update_buttons()
 
     # ---------------------------------------------------------------- журнал
 
@@ -301,7 +321,7 @@ class App(tk.Tk):
             self._fill_home()
             total = sum(len(i) for _, i in groups)
             print(f"\nНайдено кандидатов: {total}. Отметьте ненужное и нажмите "
-                  "«Удалить отмеченное».")
+                  "«Отключить отмеченное».")
         self.run_bg(work, done)
 
     def _fill_tree(self, groups):
@@ -368,13 +388,13 @@ class App(tk.Tk):
         else:
             pkg, desc, level, reasons = self.items[iid]
             if level == core.BLOCK:
-                messagebox.showinfo(APP_TITLE, f"{pkg} удалять нельзя:\n\n" +
+                messagebox.showinfo(APP_TITLE, f"{pkg} трогать нельзя:\n\n" +
                                     "\n".join(reasons))
                 return
             on = pkg not in self.checked
             if on and level == core.WARN and not messagebox.askyesno(
                     APP_TITLE, f"{pkg}\n\n" + "\n".join("• " + r for r in reasons) +
-                    "\n\nВсё равно отметить для удаления?"):
+                    "\n\nВсё равно отметить?"):
                 return
             self._set_mark(iid, on)
         self._update_buttons()
@@ -406,18 +426,20 @@ class App(tk.Tk):
 
         plan = core.validate_plan(list(self.checked), ctx)
         if not plan:
-            messagebox.showinfo(APP_TITLE, "Нечего удалять.")
+            messagebox.showinfo(APP_TITLE, "Ничего не отмечено.")
             return
+        method = self.method.get()
+        verb = "Удалить" if method == core.UNINSTALL else "Отключить"
         text = "\n".join("• " + p for p in plan)
         if ctx["new_home"]:
             text += f"\n\nДомашним экраном станет:\n{ctx['new_home']}"
-        if not messagebox.askyesno(APP_TITLE, f"Удалить {len(plan)} пакетов?\n\n{text}\n\n"
-                                   "Перед удалением будет сделан бэкап."):
+        if not messagebox.askyesno(APP_TITLE, f"{verb} {len(plan)} пакетов?\n\n{text}\n\n"
+                                   "Перед этим будет сделан бэкап."):
             return
 
         def work():
             print()
-            return core.perform_removal(plan, ctx, self.model)
+            return core.perform_removal(plan, ctx, self.model, method)
 
         def done(res):
             if not res:
@@ -431,7 +453,7 @@ class App(tk.Tk):
             if self.last_removed and messagebox.askyesno(
                     APP_TITLE, "Готово.\n\nПерезагрузить ТВ и проверить, что он "
                                "нормально загружается? (рекомендуется)\n\n"
-                               "Если загрузка не пройдёт, удалённое вернётся само."):
+                               "Если загрузка не пройдёт, всё вернётся само."):
                 self.check_boot()
         self.run_bg(work, done)
 
@@ -447,7 +469,7 @@ class App(tk.Tk):
             print(f"\n✖ Проблема с загрузкой: {msg}.")
             if self.last_backup and messagebox.askyesno(
                     APP_TITLE, f"Проблема с загрузкой: {msg}.\n\n"
-                               "Вернуть пакеты, удалённые в этот раз?"):
+                               "Вернуть пакеты, отключённые или удалённые в этот раз?"):
                 self._rollback(self.last_backup, self.last_removed, reboot=True)
         self.run_bg(core.check_boot, done)
 
@@ -506,6 +528,10 @@ class App(tk.Tk):
         self.run_bg(work, done)
 
     def _make_home(self, pkg):
+        note = self.ctx and core.home_button_warning(self.ctx, pkg)
+        if note:
+            messagebox.showinfo(APP_TITLE, note)
+
         def work():
             ok = core.set_home(pkg)
             print(f"\nДомашний экран: {pkg}" +
