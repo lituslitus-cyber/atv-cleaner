@@ -822,18 +822,31 @@ def validate_plan(plan, ctx):
 # Удаление, бэкап, восстановление
 # ---------------------------------------------------------------------------
 
+def device_label(model):
+    """Имя ТВ для папки бэкапа: своё название из настроек или модель.
+
+    IP в имени не годится: роутер чаще всего выдаёт телевизору новый адрес.
+    """
+    name = sh("settings get global device_name").strip()
+    if not name or name == "null":
+        name = model or sh("getprop ro.product.model").strip() or "TV"
+    # Запрещённые в именах файлов Windows символы и пробелы -> «_».
+    return re.sub(r'[<>:"/\\|?*\s]+', "_", name).strip("._") or "TV"
+
+
 def backup(plan, ctx, model, method=DISABLE):
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    safe_serial = re.sub(r"[^\w.-]", "_", SERIAL or "device")
-    folder = os.path.join(HERE, f"backup_{safe_serial}_{stamp}")
+    label = device_label(model)
+    folder = os.path.join(HERE, f"backup_{label}_{stamp}")
     n = 2
     while os.path.exists(folder):  # две операции в одну секунду
-        folder = os.path.join(HERE, f"backup_{safe_serial}_{stamp}-{n}")
+        folder = os.path.join(HERE, f"backup_{label}_{stamp}-{n}")
         n += 1
     os.makedirs(folder)
     listfile = os.path.join(folder, "removed.txt")
+    serialno = sh("getprop ro.serialno").strip() or "неизвестен"
     with open(listfile, "w", encoding="utf-8") as f:
-        f.write(f"# {model}, {SERIAL}, {stamp}\n")
+        f.write(f"# {model}, серийный номер {serialno}, адрес {SERIAL}, {stamp}\n")
         f.write(f"# Домашний экран до очистки: {ctx['default_home']}\n")
         f.write("# Восстановление: python atv_cleaner.py --restore "
                 f"\"{listfile}\"\n")
