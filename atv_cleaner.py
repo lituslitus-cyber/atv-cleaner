@@ -37,7 +37,7 @@ ATV Cleaner: очистка телевизоров и приставок на An
     python atv_cleaner.py --dry-run             # только показать
 """
 
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 
 import argparse
 import datetime
@@ -98,6 +98,12 @@ JUNK = {
     "com.android.printspooler": "Служба печати (на ТВ не нужна)",
     "com.android.dreams.basic": "Заставка «Цвета»",
     "com.android.egg": "Пасхалка Android",
+    "com.android.hotspot2.osulogin": "Регистрация в сетях Passpoint (Hotspot 2.0)",
+    "com.android.cts.ctsshim": "Заглушка для тестов совместимости Google (CTS)",
+    "com.android.cts.priv.ctsshim": "Заглушка для тестов совместимости Google (CTS)",
+    "com.google.android.syncadapters.calendar": "Синхронизация Google Календаря",
+    "com.xiaomo.tv.milegal": "Юридические документы Xiaomi",
+    "com.android.htmlviewer": "Просмотр HTML (раздел «Лицензии» в настройках)",
 }
 
 APPS = {
@@ -151,6 +157,9 @@ CAUTION = {
     "com.xiaomi.mitv.smartshare": "перестанет работать Mi Cast",
     "com.xiaomi.mitv.tvmanager": "мнения расходятся: в одних списках отключают, "
                                  "в других оставляют",
+    "com.xiaomo.tv.milegal": "может понадобиться, если ТВ снова покажет "
+                             "соглашение после обновления",
+    "com.android.htmlviewer": "в настройках перестанет открываться раздел лицензий",
     "com.google.android.apps.mediashell": "не будет работать трансляция с телефона "
                                           "(Chromecast)",
     "com.android.tv": "на ТВ с антенной пропадут эфирные каналы",
@@ -181,6 +190,51 @@ KEEP = {
 
 # Описания системных пакетов, которые встречаются, но в каталог не входят.
 DESCRIPTIONS = {
+    "com.dolby.android.audio.service": "обработка звука Dolby",
+    "com.android.vpndialogs": "окно разрешения для VPN-приложений",
+    "com.android.pacprocessor": "автонастройка прокси (PAC)",
+    "com.android.captiveportallogin": "вход в Wi-Fi сети с авторизацией через браузер",
+    "com.android.companiondevicemanager": "сопряжение Bluetooth-устройств",
+    "com.android.backupconfirm": "подтверждение резервного копирования",
+    "com.android.sharedstoragebackup": "резервное копирование общей памяти",
+    "com.android.settings.intelligence": "поиск в настройках",
+    "com.android.soundpicker": "выбор звуков",
+    "com.android.se": "защищённый элемент (Secure Element)",
+    "com.android.statementservice": "проверка ссылок приложений",
+    "com.android.wallpaperbackup": "резервная копия обоев",
+    "com.android.dynsystem": "установка тестовых образов системы",
+    "com.android.localtransport": "служба резервного копирования",
+    "com.android.certinstaller": "установка сертификатов",
+    "com.android.proxyhandler": "работа через прокси",
+    "com.android.keychain": "хранилище ключей и сертификатов",
+    "com.android.externalstorage": "доступ к флешкам и памяти",
+    "com.android.inputdevices": "раскладки клавиатур и пультов",
+    "com.android.location.fused": "определение местоположения; отключение "
+                                  "вызывает циклическую перезагрузку",
+    "com.android.vending": "Google Play Маркет",
+    "com.google.android.gms": "сервисы Google Play",
+    "com.google.android.gsf": "сервисы Google",
+    "com.google.android.tts": "синтез речи Google",
+    "com.google.android.katniss": "голосовой поиск Google",
+    "com.google.android.tv.assistant": "Google Ассистент",
+    "com.google.android.tungsten.setupwraith": "мастер первоначальной настройки",
+    "com.google.android.partnersetup": "настройки производителя для сервисов Google",
+    "com.google.android.onetimeinitializer": "первичная настройка Google",
+    "com.google.android.packageinstaller": "установка приложений",
+    "com.google.android.permissioncontroller": "разрешения приложений",
+    "com.google.android.webview": "встроенный браузерный движок",
+    "com.google.android.inputmethod.latin": "экранная клавиатура",
+    "com.google.android.tv.frameworkpackagestubs": "заглушки системных функций",
+    "com.mediatek.tvinput": "входы HDMI и антенна (MediaTek)",
+    "com.mediatek.tv.service": "основная ТВ-служба MediaTek",
+    "com.mediatek.tv.agent": "ТВ-служба MediaTek",
+    "com.mediatek.network": "сетевая служба MediaTek",
+    "com.mediatek.wwtv.setupwizard": "мастер настройки каналов MediaTek",
+    "com.mediatek.wwtv.webview": "встроенный браузер MediaTek",
+    "com.mediatek.android.boot.appsplashscreen": "заставка при загрузке",
+    "mediatek.factorymenu.ui": "заводское меню MediaTek",
+    "com.mstar.android.tv.disclaimercustomization": "экран соглашения при настройке",
+    "fusion.android.tv.demo": "демо-режим для магазинов (не подтверждено)",
     "com.mitv.toolhouse": "служебный пакет Xiaomi, назначение не описано",
     "com.mitv.upgrader": "служебный пакет Xiaomi, похоже на обновление (не подтверждено)",
     "com.xiaomi.mitv.scenemode": "режимы изображения Xiaomi (по названию, не подтверждено)",
@@ -229,6 +283,8 @@ PROTECTED = [re.compile(p) for p in (
     r"tvinput|hdmi|\bcec\b|tuner|dtv|tvplayer|tvserver|tvservice|"
     r"bluetooth|wifi|network|remotecontrol|\.rc$|irservice|tv\.remote",
     r"webview|chrome",
+    # Звук (Dolby, DTS), VPN, прокси, вход в Wi-Fi сети, сопряжение устройств.
+    r"dolby|dts|audio|vpndialogs|pacprocessor|captiveportal|companiondevice",
     # Голосовой поиск: на Android TV это katniss, на Google TV и в прошивках
     # Xiaomi свои пакеты, поэтому защищаем всё, что похоже на голос и поиск.
     r"katniss|voice|speech|pumpkin|hotword|assistant|search|\.tts$|"
@@ -570,6 +626,8 @@ def assess(pkg, ctx):
         warn("включён как служба специальных возможностей")
     if pkg in CAUTION:
         warn(CAUTION[pkg])
+    elif AUTOINSTALL.search(pkg):
+        warn("мнения расходятся: в одних списках отключают, в других оставляют")
     if pkg in ctx["third_party"]:
         reasons.append("не системное: при удалении удалится полностью, "
                        "APK сохраню в бэкап")
@@ -993,6 +1051,11 @@ def list_apps(ctx, include_system=False):
         if not user and not include_system:
             continue
         level, reasons = assess(pkg, ctx)
+        known = pkg in JUNK or pkg in APPS or pkg in FEATURES or AUTOINSTALL.search(pkg)
+        if not user and not known and level == OK:
+            level = WARN
+            reasons = ["о назначении этого системного пакета нет проверенных "
+                       "сведений; отключайте, только если точно знаете, что это"] + reasons
         apps.append({"pkg": pkg, "user": user, "enabled": pkg not in ctx["disabled"],
                      "desc": describe(pkg),
                      "last": last.get(pkg), "level": level, "reasons": reasons})
