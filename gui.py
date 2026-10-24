@@ -100,7 +100,8 @@ def apply_theme(root, name):
                  troughcolor=c["alt"], selectbackground=c["select"],
                  selectforeground=c["selfg"], insertcolor=c["fg"], focuscolor=c["select"])
     st.map(".", foreground=[("disabled", c["block"])])
-    st.configure("TButton", background=c["btn"], padding=(8, 4))
+    # width=-1: без минимальной ширины, кнопка по размеру текста.
+    st.configure("TButton", background=c["btn"], padding=(8, 4), width=-1)
     st.map("TButton", background=[("disabled", c["bg"]), ("pressed", c["select"]),
                                   ("active", c["hover"])],
            foreground=[("disabled", c["block"])])
@@ -278,7 +279,7 @@ class App(tk.Tk):
         icon = os.path.join(getattr(sys, "_MEIPASS", ""), "icon.ico")
         if os.name == "nt" and os.path.isfile(icon):
             self.iconbitmap(default=icon)  # default= — и для дочерних окон
-        self.geometry("1000x760")
+        self.geometry("1100x760")
         self.minsize(780, 560)
 
         self.q = queue.Queue()
@@ -293,6 +294,7 @@ class App(tk.Tk):
         self.last_backup = None  # removed.txt последнего изменения
         self.last_removed = []
         self.busy = False
+        self.screen_proc = None  # окно scrcpy с экраном ТВ
 
         self.settings = self._load_settings()
         self.theme = self.settings.get("theme") or system_theme()
@@ -363,14 +365,16 @@ class App(tk.Tk):
         self.btn_help = ttk.Button(conn, text="❓", width=3, command=self.show_help)
         self.btn_help.pack(side="left", padx=(6, 0))
         self.status = ttk.Label(conn, text="не подключено", style="Bad.TLabel")
-        self.status.pack(side="left", padx=8)
         self.btn_theme = ttk.Button(conn, width=3, command=self.toggle_theme)
         self.btn_theme.pack(side="right", padx=(0, 8))
         self.btn_folder = ttk.Button(conn, text="📁 Бэкапы", command=self.open_folder)
         self.btn_folder.pack(side="right", padx=(0, 6))
-        self.btn_install = ttk.Button(conn, text="📦 Установить APK",
-                                      command=self.install)
+        self.btn_install = ttk.Button(conn, text="📦 APK", command=self.install)
         self.btn_install.pack(side="right", padx=6)
+        self.btn_screen = ttk.Button(conn, text="🖥 Экран ТВ", command=self.show_screen)
+        self.btn_screen.pack(side="right")
+        # Надпись последней: при нехватке места сжимается она, а не кнопки.
+        self.status.pack(side="left", padx=8)
 
         pane = ttk.PanedWindow(self, orient="vertical")
         pane.pack(fill="both", expand=True, **pad)
@@ -511,6 +515,7 @@ class App(tk.Tk):
         st(self.btn_remove, scanned and bool(self.checked))
         st(self.btn_boot, connected)
         st(self.btn_install, connected)
+        st(self.btn_screen, connected)
         st(self.btn_restore, connected)
         st(self.btn_home, scanned)
         verb = "Удалить" if self.method.get() == core.UNINSTALL else "Отключить"
@@ -607,6 +612,33 @@ class App(tk.Tk):
                 DeviceDialog(self, devices)
         self.run_bg(work, done)
 
+    def show_screen(self):
+        if self.screen_proc and self.screen_proc.poll() is None:
+            print("\nОкно с экраном ТВ уже открыто.")
+            return
+        print("\n" + core.SCREEN_HELP)
+        title = f"Экран ТВ — {self.model}" if self.model else "Экран ТВ"
+        proc = core.start_screen(title)
+        if not proc:
+            return
+        self.screen_proc = proc
+
+        def pump():
+            # Вывод scrcpy — в журнал; по завершении объяснить ошибку, если была.
+            lines = []
+            for raw in proc.stdout:
+                line = raw.decode("utf-8", "replace").rstrip()
+                lines.append(line)
+                if line.startswith(("ERROR", "WARN")):
+                    print("  " + line)
+            code = proc.wait()
+            if code not in (0, None) and self.screen_proc is proc:
+                why = core.explain_screen_error("\n".join(lines))
+                print(f"Окно экрана закрылось с ошибкой{': ' + why if why else ''}.")
+            else:
+                print("Окно экрана ТВ закрыто.")
+        threading.Thread(target=pump, daemon=True).start()
+
     def show_help(self):
         HelpDialog(self)
 
@@ -657,7 +689,9 @@ class App(tk.Tk):
                 return
             if res[0] == "ok":
                 self.model = res[1]
-                self.status.configure(text=f"✔ {res[1]}", style="Good.TLabel")
+                # Производитель понятен, в строке оставляем только модель.
+                self.status.configure(text=f"✔ {res[1].split(' ', 1)[-1]}",
+                                      style="Good.TLabel")
                 print(f"Подключено: {res[1]} (Android {res[2]}, {core.SERIAL})\n"
                       "Теперь нажмите «Найти мусор» или откройте вкладку "
                       "«Установленные приложения».")
@@ -1113,6 +1147,8 @@ class App(tk.Tk):
         if self.busy and not messagebox.askyesno(
                 APP_TITLE, "Операция ещё идёт. Всё равно закрыть?"):
             return
+        if self.screen_proc and self.screen_proc.poll() is None:
+            self.screen_proc.terminate()
         try:
             core.shutdown_adb()
         except Exception:  # noqa: BLE001

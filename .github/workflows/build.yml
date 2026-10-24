@@ -30,6 +30,22 @@ jobs:
           Copy-Item pt/platform-tools/adb.exe, pt/platform-tools/AdbWinApi.dll, pt/platform-tools/AdbWinUsbApi.dll platform-tools/
           platform-tools/adb.exe version
 
+      # scrcpy (Apache 2.0) показывает экран ТВ. Свой adb у него не нужен:
+      # программа передаёт ему путь к своему через переменную ADB.
+      - name: Скачивание scrcpy
+        shell: pwsh
+        env:
+          SCRCPY_VERSION: "3.3.4"
+        run: |
+          $v = $env:SCRCPY_VERSION
+          Invoke-WebRequest "https://github.com/Genymobile/scrcpy/releases/download/v$v/scrcpy-win64-v$v.zip" -OutFile scrcpy.zip
+          Expand-Archive scrcpy.zip -DestinationPath scrcpy-tmp
+          New-Item -ItemType Directory scrcpy | Out-Null
+          Copy-Item scrcpy-tmp/*/* scrcpy/ -Recurse
+          Remove-Item scrcpy/adb.exe, scrcpy/AdbWinApi.dll, scrcpy/AdbWinUsbApi.dll -ErrorAction SilentlyContinue
+          if (-not (Test-Path scrcpy/scrcpy.exe) -or -not (Test-Path scrcpy/scrcpy-server)) { exit 1 }
+          Get-ChildItem scrcpy | Select-Object Name, Length | Format-Table -AutoSize
+
       - name: Значок и сведения о версии
         run: python tools/make_build_files.py
 
@@ -37,7 +53,8 @@ jobs:
         run: >-
           pyinstaller --onefile --windowed --name ATVCleaner
           --icon build/icon.ico --version-file build/version_info.txt
-          --add-data "platform-tools;platform-tools" --add-data "build/icon.ico;."
+          --add-data "platform-tools;platform-tools" --add-data "scrcpy;scrcpy"
+          --add-data "build/icon.ico;."
           --hidden-import xiaomi_db
           gui.py
 

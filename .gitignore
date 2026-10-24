@@ -7,3 +7,6 @@ platform-tools.zip
 backup_*/
 last_ip.txt
 settings.json
+scrcpy/
+scrcpy.zip
+scrcpy-tmp/

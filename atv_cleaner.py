@@ -1543,6 +1543,69 @@ def shutdown_adb():
 
 
 # ---------------------------------------------------------------------------
+# Экран ТВ на компьютере (scrcpy, github.com/Genymobile/scrcpy, Apache 2.0)
+# ---------------------------------------------------------------------------
+
+SCREEN_HELP = """Экран ТВ открыт в отдельном окне. Управление:
+  стрелки и Enter на клавиатуре — как на пульте; можно печатать текст;
+  щелчок мышью — выбрать, правая кнопка — «Назад», средняя (колесо) — «Домой»;
+  Alt+H — «Домой», Alt+B — «Назад», Alt+M — меню, Alt+↑/↓ — громкость.
+Платное видео (Netflix, YouTube и т. п.), HDMI-входы и антенна в окне будут
+чёрными: это защита от копирования в Android, на телевизоре всё показывается."""
+
+
+def find_scrcpy():
+    """Путь к scrcpy: рядом с программой, из exe (копируется рядом) или в PATH."""
+    name = "scrcpy.exe" if os.name == "nt" else "scrcpy"
+    local = os.path.join(HERE, "scrcpy", name)
+    bundled = os.path.join(getattr(sys, "_MEIPASS", ""), "scrcpy")
+    if not os.path.isfile(local) and os.path.isfile(os.path.join(bundled, name)):
+        # Из временной папки exe scrcpy запускать нельзя: она исчезнет при выходе.
+        shutil.copytree(bundled, os.path.dirname(local), dirs_exist_ok=True)
+    if os.path.isfile(local):
+        return local
+    return shutil.which("scrcpy")
+
+
+def start_screen(title="Экран ТВ"):
+    """Открывает окно с экраном ТВ. -> запущенный процесс или None."""
+    exe = find_scrcpy()
+    if not exe:
+        print("scrcpy не найден. В собранной программе он встроен; при запуске из "
+              "исходников поставьте scrcpy (github.com/Genymobile/scrcpy).")
+        return None
+    if not SERIAL:
+        print("Сначала подключитесь к телевизору.")
+        return None
+    env = dict(os.environ)
+    env["ADB"] = ADB  # тот же adb, что у программы: иначе два сервера мешают друг другу
+    cmd = [exe, "-s", SERIAL, "--window-title", title,
+           "--no-audio",             # звук остаётся на телевизоре
+           "--max-size", "1280",     # по Wi-Fi большое разрешение дёргается
+           "--video-bit-rate", "6M", "--max-fps", "30"]
+    print(f"Открываю экран ТВ ({os.path.basename(exe)})...")
+    try:
+        return subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                                creationflags=NO_WINDOW)
+    except OSError as e:
+        print(f"Не удалось запустить scrcpy: {e}")
+        return None
+
+
+def explain_screen_error(output):
+    """Понятная причина, если окно экрана закрылось с ошибкой."""
+    low = output.lower()
+    if "unauthorized" in low:
+        return "ТВ не разрешил отладку с этого компьютера"
+    if "not found" in low or "no devices" in low or "device offline" in low:
+        return "ТВ не отвечает по ADB: переподключитесь"
+    if "could not open video stream" in low or "encoder" in low:
+        return "ТВ не смог начать трансляцию (видеокодер занят или не поддерживается)"
+    return ""
+
+
+# ---------------------------------------------------------------------------
 
 def main():
     global ADB
@@ -1556,6 +1619,8 @@ def main():
     ap.add_argument("--uninstall", action="store_true",
                     help="удалять пакеты (pm uninstall --user 0), а не отключать")
     ap.add_argument("--restore", metavar="FILE", help="вернуть пакеты из бэкапа removed.txt")
+    ap.add_argument("--screen", action="store_true",
+                    help="показать экран ТВ в окне (scrcpy)")
     ap.add_argument("--scan", action="store_true",
                     help="найти Android TV и приставки в локальной сети")
     ap.add_argument("--install", metavar="APK", nargs="+",
@@ -1570,6 +1635,14 @@ def main():
         return
 
     pick_device(args)
+    if args.screen:
+        print(SCREEN_HELP)
+        proc = start_screen()
+        if proc:
+            for line in proc.stdout:
+                print("  " + line.decode("utf-8", "replace").rstrip())
+            proc.wait()
+        return
     model, android = device_info()
     print(f"\nУстройство: {model} (Android {android}, {SERIAL})")
 
