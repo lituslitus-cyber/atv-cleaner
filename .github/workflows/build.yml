@@ -19,7 +19,7 @@ jobs:
           python-version: "3.12"
 
       - name: Установка PyInstaller
-        run: pip install pyinstaller==6.11.1
+        run: pip install pyinstaller==6.11.1 pillow==11.0.0
 
       - name: Скачивание ADB
         shell: pwsh
@@ -30,8 +30,15 @@ jobs:
           Copy-Item pt/platform-tools/adb.exe, pt/platform-tools/AdbWinApi.dll, pt/platform-tools/AdbWinUsbApi.dll platform-tools/
           platform-tools/adb.exe version
 
+      - name: Значок и сведения о версии
+        run: python tools/make_build_files.py
+
       - name: Сборка exe
-        run: pyinstaller --onefile --windowed --name ATVCleaner --add-data "platform-tools;platform-tools" gui.py
+        run: >-
+          pyinstaller --onefile --windowed --name ATVCleaner
+          --icon build/icon.ico --version-file build/version_info.txt
+          --add-data "platform-tools;platform-tools" --add-data "build/icon.ico;."
+          gui.py
 
       - name: Проверка, что модули собраны
         shell: pwsh

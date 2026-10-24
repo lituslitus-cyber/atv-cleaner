@@ -275,6 +275,9 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title(APP_TITLE)
+        icon = os.path.join(getattr(sys, "_MEIPASS", ""), "icon.ico")
+        if os.name == "nt" and os.path.isfile(icon):
+            self.iconbitmap(default=icon)  # default= — и для дочерних окон
         self.geometry("1000x760")
         self.minsize(780, 560)
 
