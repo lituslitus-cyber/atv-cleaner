@@ -21,6 +21,32 @@ HINT = ("Щелчок по пакету отмечает его, по групп
 APPS_HINT = ("Отметьте приложения щелчком и выберите действие. Сторонние "
              "приложения удаляются полностью, их APK сохраняется в бэкап.")
 
+DEBUG_HELP = """Как включить отладку на телевизоре или приставке
+
+1. Включите режим разработчика
+   • Android TV (Xiaomi Mi TV, Mi Box S): Настройки → Настройки устройства →
+     Об устройстве → 7 раз нажмите «Сборка».
+   • Google TV (Xiaomi TV A, Mi Box 2-го поколения): Настройки → Система →
+     Об устройстве → 7 раз нажмите «Сборка ОС Android TV».
+   Появится надпись «Вы стали разработчиком».
+
+2. Включите отладку
+   Вернитесь назад и откройте «Для разработчиков» (в «Настройках устройства»
+   или в «Системе»). Включите «Отладка по USB» и, если есть такой пункт,
+   «Отладка по сети» (может называться «ADB по сети»). Если пункта про сеть
+   нет, на многих ТВ подключение по сети работает и с одной «Отладкой по USB».
+
+3. Узнайте IP телевизора
+   Настройки → Сеть и Интернет → ваша сеть Wi-Fi (или Об устройстве → Статус).
+   Можно не искать: нажмите «📡 Найти ТВ».
+
+4. Разрешите подключение
+   При первом подключении на экране ТВ появится «Разрешить отладку?».
+   Отметьте «Всегда разрешать с этого компьютера» и нажмите OK.
+
+На многих Xiaomi отладка по сети выключается после перезагрузки ТВ.
+Если программа перестала видеть телевизор, включите её снова."""
+
 PALETTES = {
     "light": dict(bg="#f3f3f3", fg="#1f1f1f", field="#ffffff", alt="#e6e6e6",
                   border="#c7c7c7", select="#cce4f7", selfg="#000000",
@@ -129,6 +155,108 @@ def apply_theme(root, name):
     return c
 
 
+class DeviceDialog(tk.Toplevel):
+    """Список найденных в сети ТВ: выбрать и подключиться."""
+
+    def __init__(self, app, devices):
+        super().__init__(app)
+        self.app = app
+        self.devices = {d["ip"]: d for d in devices}
+        self.title("Найденные устройства")
+        self.geometry("720x360")
+        self.transient(app)
+        self.configure(bg=app.colors["bg"])
+        set_titlebar(self, app.theme == "dark")
+
+        frame = ttk.Frame(self, padding=8)
+        frame.pack(fill="both", expand=True)
+        if devices:
+            ttk.Label(frame, text="Выберите телевизор и нажмите «Подключить» "
+                      "(или дважды щёлкните по строке).").pack(anchor="w")
+        else:
+            self.geometry("720x620")
+            ttk.Label(frame, wraplength=690, justify="left", text=(
+                "Ничего не найдено. Проверьте, что ТВ включён и подключён к той же "
+                "сети, что и компьютер, и что на нём включена отладка. VPN на "
+                "компьютере тоже может мешать поиску.")).pack(anchor="w")
+            help_text(frame, app, height=20).pack(fill="both", expand=True, pady=6)
+
+        cols = ("model", "android", "state")
+        self.tree = ttk.Treeview(frame, columns=cols, selectmode="browse", height=8)
+        for col, title, width in (("#0", "IP", 130), ("model", "Устройство", 230),
+                                  ("android", "Android", 70), ("state", "Состояние", 260)):
+            self.tree.heading(col, text=title)
+            self.tree.column(col, width=width, stretch=col in ("model", "state"))
+        for d in devices:
+            what = d["model"] or d["name"] or (
+                "Android TV" if d["remote"] else "устройство с ADB")
+            self.tree.insert("", "end", iid=d["ip"], text=d["ip"],
+                             values=(what, d["android"] or "—", d["state"]))
+        self.tree.pack(fill="both", expand=True, pady=6)
+        self.tree.bind("<Double-1>", lambda e: self.choose())
+        if not devices:
+            self.tree.pack_forget()
+        if devices:
+            self.tree.selection_set(devices[0]["ip"])
+            self.tree.focus(devices[0]["ip"])
+
+        ttk.Label(frame, style="Muted.TLabel", wraplength=690, justify="left", text=(
+            "При поиске на ТВ, которым ещё не разрешена отладка с этого компьютера, "
+            "может появиться окно «Разрешить отладку?». Для своего ТВ отметьте "
+            "«Всегда разрешать» и нажмите OK.")).pack(anchor="w")
+        bar = ttk.Frame(frame)
+        bar.pack(fill="x", pady=(8, 0))
+        ttk.Button(bar, text="❓ Как включить отладку",
+                   command=app.show_help).pack(side="left")
+        ttk.Button(bar, text="Закрыть", command=self.destroy).pack(side="right")
+        ttk.Button(bar, text="🔄 Искать снова", command=self.again).pack(side="right", padx=6)
+        self.btn_ok = ttk.Button(bar, text="Подключить", command=self.choose)
+        self.btn_ok.pack(side="right")
+        if not devices:
+            self.btn_ok.configure(state="disabled")
+
+    def choose(self):
+        ip = self.tree.focus()
+        if ip:
+            self.destroy()
+            self.app.use_device(ip)
+
+    def again(self):
+        self.destroy()
+        self.app.find_devices()
+
+
+def help_text(parent, app, height=24):
+    """Текст инструкции только для чтения, в цветах темы."""
+    c = app.colors
+    box = tk.Text(parent, wrap="word", height=height, relief="flat", padx=10, pady=8,
+                  background=c["field"], foreground=c["fg"], highlightthickness=0,
+                  font=("Segoe UI", 10))
+    box.insert("1.0", DEBUG_HELP)
+    box.tag_add("title", "1.0", "1.end")
+    box.tag_configure("title", font=("Segoe UI", 11, "bold"))
+    box.configure(state="disabled")
+    return box
+
+
+class HelpDialog(tk.Toplevel):
+    def __init__(self, app):
+        super().__init__(app)
+        self.title("Как включить отладку")
+        self.geometry("680x560")
+        self.transient(app)
+        self.configure(bg=app.colors["bg"])
+        set_titlebar(self, app.theme == "dark")
+        frame = ttk.Frame(self, padding=8)
+        frame.pack(fill="both", expand=True)
+        help_text(frame, app).pack(fill="both", expand=True)
+        bar = ttk.Frame(frame)
+        bar.pack(fill="x", pady=(8, 0))
+        ttk.Button(bar, text="Закрыть", command=self.destroy).pack(side="right")
+        ttk.Button(bar, text="📡 Найти ТВ в сети",
+                   command=lambda: (self.destroy(), app.find_devices())).pack(side="right", padx=6)
+
+
 class QueueWriter:
     """Перенаправляет print() из рабочего потока в журнал окна."""
 
@@ -211,8 +339,7 @@ class App(tk.Tk):
             tree.tag_configure("warn", foreground=c["warn"])
             tree.tag_configure("block", foreground=c["block"])
             tree.tag_configure("off", foreground=c["muted"])
-        self.btn_theme.configure(text="☀ Светлая" if self.theme == "dark"
-                                 else "🌙 Тёмная")
+        self.btn_theme.configure(text="☀" if self.theme == "dark" else "🌙")
 
     # ---------------------------------------------------------------- интерфейс
 
@@ -228,9 +355,13 @@ class App(tk.Tk):
         ip_entry.bind("<Return>", lambda e: self.connect())
         self.btn_connect = ttk.Button(conn, text="Подключить", command=self.connect)
         self.btn_connect.pack(side="left", padx=6)
+        self.btn_find = ttk.Button(conn, text="📡 Найти ТВ", command=self.find_devices)
+        self.btn_find.pack(side="left")
+        self.btn_help = ttk.Button(conn, text="❓", width=3, command=self.show_help)
+        self.btn_help.pack(side="left", padx=(6, 0))
         self.status = ttk.Label(conn, text="не подключено", style="Bad.TLabel")
         self.status.pack(side="left", padx=8)
-        self.btn_theme = ttk.Button(conn, command=self.toggle_theme)
+        self.btn_theme = ttk.Button(conn, width=3, command=self.toggle_theme)
         self.btn_theme.pack(side="right", padx=(0, 8))
         self.btn_folder = ttk.Button(conn, text="📁 Бэкапы", command=self.open_folder)
         self.btn_folder.pack(side="right", padx=(0, 6))
@@ -372,6 +503,7 @@ class App(tk.Tk):
         def st(b, on):
             b.configure(state="normal" if on and not self.busy else "disabled")
         st(self.btn_connect, True)
+        st(self.btn_find, True)
         st(self.btn_scan, connected)
         st(self.btn_remove, scanned and bool(self.checked))
         st(self.btn_boot, connected)
@@ -458,6 +590,27 @@ class App(tk.Tk):
     def _ip_file(self):
         return os.path.join(core.HERE, "last_ip.txt")
 
+    def find_devices(self):
+        typed = self.ip.get().strip()
+
+        def work():
+            core.ensure_adb()
+            core.run([core.ADB, "start-server"], timeout=30)
+            print("\nИщу Android TV и приставки в сети, это займёт до полуминуты...")
+            return core.scan_network([typed, core.read_last_ip()])
+
+        def done(devices):
+            if devices is not None:
+                DeviceDialog(self, devices)
+        self.run_bg(work, done)
+
+    def show_help(self):
+        HelpDialog(self)
+
+    def use_device(self, ip):
+        self.ip.set(ip)
+        self.connect()
+
     def _load_last_ip(self):
         try:
             with open(self._ip_file(), encoding="utf-8") as f:
@@ -501,8 +654,7 @@ class App(tk.Tk):
                 return
             if res[0] == "ok":
                 self.model = res[1]
-                self.status.configure(text=f"{res[1]}, Android {res[2]}",
-                                      style="Good.TLabel")
+                self.status.configure(text=f"✔ {res[1]}", style="Good.TLabel")
                 print(f"Подключено: {res[1]} (Android {res[2]}, {core.SERIAL})\n"
                       "Теперь нажмите «Найти мусор» или откройте вкладку "
                       "«Установленные приложения».")
@@ -519,10 +671,11 @@ class App(tk.Tk):
                                     "нажмите OK, затем снова «Подключить».")
             else:
                 self.status.configure(text="не подключено", style="Bad.TLabel")
-                messagebox.showwarning(APP_TITLE,
-                                       "Телевизор не найден.\n\nПроверьте IP (Настройки -> "
-                                       "Сеть и Интернет -> ваша сеть) и что на ТВ "
-                                       "включена отладка по сети.")
+                if messagebox.askyesno(APP_TITLE,
+                                       "Телевизор не найден.\n\nПроверьте IP (или нажмите "
+                                       "«Найти ТВ в сети») и что на ТВ включена отладка.\n\n"
+                                       "Показать, как включить отладку?"):
+                    self.show_help()
         self.run_bg(work, done)
 
     # ---------------------------------------------------------------- очистка

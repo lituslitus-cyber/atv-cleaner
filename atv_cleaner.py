@@ -40,10 +40,13 @@ ATV Cleaner: очистка телевизоров и приставок на An
 __version__ = "1.3.1"
 
 import argparse
+import concurrent.futures
 import datetime
+import ipaddress
 import os
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -426,6 +429,139 @@ def try_connect(addr):
     return False
 
 
+# ---------------------------------------------------------------------------
+# Поиск ТВ в локальной сети
+# ---------------------------------------------------------------------------
+
+ADB_PORT = 5555
+ATV_REMOTE_PORT = 6466  # служба пульта Android TV: есть только у ТВ и приставок
+CAST_PORT = 8009        # Chromecast: ТВ, приставки, но и колонки Google
+
+
+def read_last_ip():
+    try:
+        with open(os.path.join(HERE, "last_ip.txt"), encoding="utf-8") as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
+def local_networks(extra_ips=()):
+    """Домашние подсети /24, в которых есть этот компьютер (и прошлый IP ТВ)."""
+    ips = set()
+    try:
+        # Адрес, через который компьютер ходит наружу; пакет не отправляется.
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as u:
+            u.connect(("192.0.2.1", 9))
+            ips.add(u.getsockname()[0])
+    except OSError:
+        pass
+    try:
+        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+            ips.add(info[4][0])
+    except OSError:
+        pass
+    ips.update(ip.split(":")[0] for ip in extra_ips if ip)
+    nets = []
+    for ip in sorted(ips):
+        try:
+            addr = ipaddress.IPv4Address(ip)
+        except ValueError:
+            continue
+        if addr.is_private and not addr.is_loopback and not addr.is_link_local:
+            net = ipaddress.IPv4Network(f"{ip}/24", strict=False)
+            if net not in nets:
+                nets.append(net)
+    return nets[:4]
+
+
+def port_open(ip, port, timeout=0.6):
+    try:
+        with socket.create_connection((ip, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
+def probe_adb(ip):
+    """Подключается к ТВ по ADB и узнаёт модель. Не трогает текущее SERIAL."""
+    addr = f"{ip}:{ADB_PORT}"
+    was_connected = addr in adb_devices()
+    out = adb_connect(addr)
+    info = {"state": "нет ответа"}
+    if "connected" not in out:
+        return info
+    for _ in range(3):
+        state = adb_devices().get(addr, "")
+        if state in ("device", "unauthorized"):
+            break
+        time.sleep(0.5)
+    if state == "unauthorized":
+        info["state"] = "нужно разрешить отладку на ТВ"
+    elif state == "device":
+        def q(cmd):
+            return run([ADB, "-s", addr, "shell", cmd], timeout=10)[1].strip()
+        info["state"] = "готов к подключению"
+        info["model"] = " ".join(filter(None, [q("getprop ro.product.manufacturer"),
+                                               q("getprop ro.product.model")]))
+        info["android"] = q("getprop ro.build.version.release")
+        features = q("pm list features")
+        info["is_tv"] = ("android.software.leanback" in features
+                         or "tv" in q("getprop ro.build.characteristics"))
+    if not was_connected:
+        run([ADB, "disconnect", addr], timeout=10)
+    return info
+
+
+def scan_network(extra_ips=(), progress=print):
+    """Ищет Android TV и приставки. -> [{ip, name, adb, remote, cast, state, model, ...}]."""
+    nets = local_networks(extra_ips)
+    if not nets:
+        progress("Не удалось определить домашнюю сеть компьютера.")
+        return []
+    progress("Проверяю сети: " + ", ".join(str(n) for n in nets))
+    hosts = [str(h) for n in nets for h in n.hosts()]
+    ports = (ADB_PORT, ATV_REMOTE_PORT, CAST_PORT)
+    found = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=128) as pool:
+        futures = {pool.submit(port_open, h, p): (h, p) for h in hosts for p in ports}
+        for fut in concurrent.futures.as_completed(futures):
+            if fut.result():
+                h, p = futures[fut]
+                found.setdefault(h, set()).add(p)
+
+    devices = []
+    for ip in sorted(found, key=lambda x: tuple(map(int, x.split(".")))):
+        open_ports = found[ip]
+        # Только то, что похоже на ТВ: ADB по сети или служба пульта Android TV.
+        if ADB_PORT not in open_ports and ATV_REMOTE_PORT not in open_ports:
+            continue
+        try:
+            name = socket.gethostbyaddr(ip)[0].split(".")[0]
+        except OSError:
+            name = ""
+        dev = {"ip": ip, "name": name, "adb": ADB_PORT in open_ports,
+               "remote": ATV_REMOTE_PORT in open_ports, "cast": CAST_PORT in open_ports,
+               "model": "", "android": "", "is_tv": None}
+        if dev["adb"]:
+            progress(f"Опрашиваю {ip} по ADB...")
+            dev.update(probe_adb(ip))
+        else:
+            dev["state"] = "отладка по сети выключена"
+        # Устройство с ADB, которое само сказало, что оно не ТВ (телефон), скрываем.
+        if dev["is_tv"] is False and not dev["remote"]:
+            continue
+        devices.append(dev)
+    progress(f"Найдено устройств: {len(devices)}.")
+    return devices
+
+
+def print_devices(devices):
+    for i, d in enumerate(devices, 1):
+        what = d["model"] or d["name"] or "Android TV"
+        print(f"  {i}. {d['ip']:<15} {what:<28} {d['state']}")
+
+
 def ask_ip():
     last_file = os.path.join(HERE, "last_ip.txt")
     last = ""
@@ -439,11 +575,22 @@ def ask_ip():
     hint = f" [Enter = {last}]" if last else ""
     while True:
         try:
-            ip = input(f"IP телевизора{hint}, или q для выхода: ").strip()
+            ip = input(f"IP телевизора{hint}, s — найти ТВ в сети, q — выход: ").strip()
         except EOFError:
             ip = "q"
         if ip.lower() in ("q", "й"):
             sys.exit(0)
+        if ip.lower() in ("s", "ы"):
+            devices = scan_network([last])
+            print_devices(devices)
+            if devices:
+                n = input("Номер устройства (Enter — ввести IP вручную): ").strip()
+                if n.isdigit() and 1 <= int(n) <= len(devices):
+                    ip = devices[int(n) - 1]["ip"]
+                    with open(last_file, "w", encoding="utf-8") as f:
+                        f.write(ip)
+                    return ip
+            continue
         ip = ip or last
         if re.fullmatch(r"\d{1,3}(\.\d{1,3}){3}(:\d+)?", ip):
             with open(last_file, "w", encoding="utf-8") as f:
@@ -1199,10 +1346,18 @@ def main():
     ap.add_argument("--uninstall", action="store_true",
                     help="удалять пакеты (pm uninstall --user 0), а не отключать")
     ap.add_argument("--restore", metavar="FILE", help="вернуть пакеты из бэкапа removed.txt")
+    ap.add_argument("--scan", action="store_true",
+                    help="найти Android TV и приставки в локальной сети")
     ap.add_argument("--install", metavar="APK", nargs="+",
                     help="установить на ТВ файлы .apk / .apks / .xapk")
     args = ap.parse_args()
     ADB = args.adb
+
+    if args.scan:
+        ensure_adb()
+        run([ADB, "start-server"], timeout=30)
+        print_devices(scan_network([read_last_ip()]))
+        return
 
     pick_device(args)
     model, android = device_info()
