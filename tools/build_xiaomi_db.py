@@ -31,8 +31,19 @@ def parse(path):
     # Модель берём из первой строки: дальше в тексте упоминаются соседние модели.
     ids = re.findall(r"\b(MiTV-[A-Z0-9]+|MIBOX\d)\b", title) or \
         re.findall(r"\b(MiTV-[A-Z0-9]+|MIBOX\d)\b", top)[:1]
-    codename = re.search(r"codename (\w+)", top) or re.search(r"MiTV-\w+, (\w+)[,)]", top)
-    android = re.search(r"Android(?: TV)?(?: on Android)? (\d+)", top)
+    codename = (re.search(r"codename (\w+)", top) or re.search(r"MiTV-\w+, (\w+)[,)]", top)
+                or re.search(r"MiTV-\w+ \((\w+)[,)]", top))
+    android = re.search(r"(?:Android|Google TV)(?: TV)?(?: on Android)? (\d+)", top)
+    china = bool(re.search(r"China|CN firmware|HyperOS", top))
+    if re.search(r"HyperOS(?: TV)? \d", top):
+        firmware = "HyperOS"
+    elif "Google TV" in top:
+        firmware = "Google TV"
+    elif "Android TV" in top or "Mi Box" in top:
+        firmware = "Android TV"
+    else:
+        firmware = "Android"
+    chip = next((c for c in ("Amlogic", "MediaTek") if c in top), "")
     disabled, personal, section = [], [], ""
     for line in lines[len(header):]:
         s = line.strip()
@@ -64,6 +75,9 @@ def parse(path):
         "ids": sorted(set(ids)),
         "codename": codename.group(1) if codename else "",
         "android": android.group(1) if android else "",
+        "firmware": firmware,
+        "china": china,
+        "chip": chip,
         "disabled": disabled,
         "personal": personal,
         "keep": sorted(keep),
@@ -93,6 +107,37 @@ def main(repo):
         f.write(pprint.pformat(models, width=100, sort_dicts=True))
         f.write("\n")
     print(f"{out}: {len(models)} моделей, коммит {commit}")
+    update_readme(models)
+
+
+def device_rows(models):
+    """Строки таблицы устройств для README."""
+    rows = []
+    for m in models.values():
+        t = m["title"]
+        name = re.split(r" \(|, Android| on Android|, MiTV-", t)[0].strip()
+        kind = m["firmware"] + (", Китай" if m["china"] else "")
+        rows.append((name, ", ".join(m["ids"]) or "—", m["codename"] or "—",
+                     m["android"] or "—", kind, m["chip"] or "—", len(m["disabled"])))
+    rows.sort(key=lambda r: (not r[0].startswith(("Xiaomi Mi Box", "Xiaomi TV Box", "Xiaomi TV Stick")),
+                             r[0], r[3]))
+    head = ("| Устройство | Модель | Кодовое имя | Android | Прошивка | Чип | Пакетов |\n"
+            "|---|---|---|---|---|---|---|\n")
+    return head + "".join(f"| {' | '.join(str(x) for x in r)} |\n" for r in rows)
+
+
+def update_readme(models):
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "README.md")
+    text = open(path, encoding="utf-8").read()
+    start, end = "<!-- devices:start -->", "<!-- devices:end -->"
+    if start not in text:
+        print("В README нет меток таблицы устройств, пропускаю.")
+        return
+    a, b = text.index(start) + len(start), text.index(end)
+    text = text[:a] + "\n" + device_rows(models) + text[b:]
+    open(path, "w", encoding="utf-8").write(text)
+    print(f"README: таблица из {len(models)} устройств обновлена")
 
 
 if __name__ == "__main__":

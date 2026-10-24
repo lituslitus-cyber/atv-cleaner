@@ -35,6 +35,49 @@ TV Stick 4K, Mi TV 4A/P1, серии MSSP, MOOQ, AXSO, Google TV и китайс
   домашний экран. Китайские прошивки и HyperOS принимают только лаунчеры из
   своего списка, и без этой проверки остался бы чёрный экран.
 
+### Устройства в базе
+
+Для этих устройств есть проверенный список: программа отметит ★ пакеты,
+которые отключали именно на такой модели. Модель ТВ видна в
+Настройки → Об устройстве → Модель, программа определяет её сама.
+Для остальных Android TV рекомендации даются по всем моделям из базы.
+
+<!-- devices:start -->
+| Устройство | Модель | Кодовое имя | Android | Прошивка | Чип | Пакетов |
+|---|---|---|---|---|---|---|
+| Xiaomi Mi Box 3 | MIBOX3 | once | 9 | Android TV | Amlogic | 24 |
+| Xiaomi Mi Box S | MIBOX4 | oneday | 9 | Android TV | Amlogic | 22 |
+| Xiaomi Mi Box S 2nd gen | MiTV-AFKR0 | jaws | 11 | Google TV | Amlogic | 16 |
+| Xiaomi TV Box S 3rd gen | MiTV-AFMU0 | twilight | 14 | Google TV | Amlogic | 25 |
+| Xiaomi TV Stick 4K | MiTV-AYFR0 | soul | 14 | Android TV | Amlogic | 22 |
+| Xiaomi TV Stick 4K 2nd gen | MiTV-AFMU1 | twilight | 14 | Google TV | Amlogic | 24 |
+| Redmi TV | MiTV-ANTL0 | starwars | 5 | Android | Amlogic | 11 |
+| Redmi TV | MiTV-MFTP0 | alita | 9 | Android, Китай | MediaTek | 16 |
+| Xiaomi Mi TV | MiTV-MOOQ0 | croods | 10 | Android TV | MediaTek | 29 |
+| Xiaomi Mi TV 4A | MiTV-MOOQ1 | tarzan | 10 | Android TV | — | 21 |
+| Xiaomi Mi TV P1 43" | MiTV-MOOQ2 | croods | 11 | Android TV | MediaTek | 27 |
+| Xiaomi MiTV-AESP0 | MiTV-AESP0 | aquaman | 9 | Android TV | — | 42 |
+| Xiaomi MiTV-ANSP0 | MiTV-ANSP0 | jobs | 9 | Android, Китай | Amlogic | 31 |
+| Xiaomi MiTV-ASTP0 | MiTV-ASTP0 | mulan | 9 | Android, Китай | Amlogic | 38 |
+| Xiaomi MiTV-ASTP1 | MiTV-ASTP1 | maverick | 9 | Android, Китай | Amlogic | 18 |
+| Xiaomi MiTV-AXFR1 | MiTV-AXFR1 | rango | 11 | Android TV | Amlogic | 25 |
+| Xiaomi MiTV-AXSO0 | MiTV-AXSO0 | dangal | 9 | Android TV | Amlogic | 33 |
+| Xiaomi MiTV-AXSO2 | MiTV-AXSO2 | dangalUHD | 9 | Android TV | Amlogic | 32 |
+| Xiaomi MiTV-MFTR0 | MiTV-MFTR0 | freeguy | 11 | HyperOS, Китай | MediaTek | 22 |
+| Xiaomi MiTV-MOOR2 | MiTV-MOOR2 | venom | 11 | Google TV | MediaTek | 22 |
+| Xiaomi MiTV-MOSR4 | MiTV-MOSR4 | irobot | 11 | Google TV | MediaTek | 27 |
+| Xiaomi MiTV-MSSP0 / Xiaomi Mi TV 4A 32 | MiTV-MSSP0 | amelie | 9 | Android TV | — | 11 |
+| Xiaomi MiTV-MSSP1 | MiTV-MSSP1 | nino | 9 | Android TV | — | 8 |
+| Xiaomi MiTV-MSSP2 | MiTV-MSSP2 | volver | 9 | Android TV | MediaTek | 16 |
+| Xiaomi MiTV-MSSP3 | MiTV-MSSP3 | machuca | 11 | Android TV | MediaTek | 23 |
+| Xiaomi MiTV-MSSP3 | MiTV-MSSP3 | machuca | 9 | Android TV | MediaTek | 18 |
+| Xiaomi Redmi Smart TV A Pro 55" 2025 Energy-saving | MiTV-ASTR0 | blueplanet | 14 | HyperOS, Китай | Amlogic | 26 |
+| Xiaomi TV A Pro 75" 2026 | MiTV-MZTU0 | river | 14 | Google TV | MediaTek | 19 |
+| Xiaomi TV EA Pro 55" | MiTV-MTEQ0 | baymax | 10 | Android, Китай | MediaTek | 52 |
+| Xiaomi TV S Mini LED 75 2025 | MiTV-MOEU0 | ladybird | 14 | Google TV | MediaTek | 19 |
+| Xiaomi TV S Pro 100 Mini LED 2025 | MiTV-MFFU0 | finch | 14 | HyperOS, Китай | MediaTek | 14 |
+<!-- devices:end -->
+
 База собрана скриптом `tools/build_xiaomi_db.py` из списков проекта
 [cleanyourtv](https://github.com/Gathin23/cleanyourtv) (MIT License,
 Copyright (c) 2026 Gathin). Чтобы обновить её, склонируйте cleanyourtv и
