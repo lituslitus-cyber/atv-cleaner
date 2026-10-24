@@ -170,6 +170,120 @@ CAUTION = {
     "com.google.android.tvrecommendations": "главный экран может стать пустым",
 }
 
+# Пакеты из проверенных списков по 31 модели Xiaomi (cleanyourtv, free-my-tv).
+JUNK.update({
+    "com.mitv.shoplugin": "Плагин ТВ-магазина Taobao (Китай)",
+    "com.xiaomi.tvqs": "Система качества Xiaomi: отправка отчётов о сбоях",
+    "com.xiaomi.tvqs.overseas.y24": "Отправка статистики качества Xiaomi",
+    "com.mitv.cloudcontrol": "Удалённая настройка ТВ командами из облака Xiaomi",
+    "com.xiaomi.screenrecorder": "Запись экрана для отправки отзывов",
+    "com.mitv.tvhome.oemtab": "Рекламный ряд и вкладка Xiaomi в лаунчере Google",
+    "com.miui.analytics": "Аналитика Xiaomi (OneTrack)",
+    "com.duokan.videodaily": "Короткие промо-видео с рекламным модулем",
+    "com.mitv.screensaver": "Заставка Xiaomi с рекламным контентом",
+    "com.xiaomi.mitv.hyper.screensaver": "Рекламная заставка HyperOS",
+    "com.android.smspush": "Push-сообщения через SMS (на ТВ не нужны)",
+    "com.xiaomi.mitv.csi": "Опросы удовлетворённости «помощника после продаж»",
+    "tv.alphonso.alphonso_eula": "Alphonso: распознаёт, что вы смотрите, для рекламы",
+    "co.sensara.tv.mitv": "Рекламный ТВ-гид Sensara",
+    "com.glance.tv": "Новости и реклама Glance",
+    "com.gitvdemo.video": "Демо-ролик GITV",
+    "com.mitv.download.service": "Загрузчик контента PatchWall",
+    "com.miui.misightservice": "Удалённая диагностика и выгрузка логов MiSight",
+    "com.xiaomi.mitv.debug": "Сбор логов Xiaomi",
+    "com.google.android.syncadapters.contacts": "Синхронизация контактов Google",
+})
+APPS.update({
+    "com.xiaomi.gamecenter.sdk.service.mibox": "Модуль игрового центра Xiaomi",
+    "com.xiaomi.mitv.handbook": "Руководство пользователя Xiaomi",
+    "com.xiaomi.mitv.calendar": "Календарь Xiaomi",
+    "com.xiaomi.mitv.karaoke.service": "Караоке Xiaomi",
+    "com.xiaomi.mitv.healthdiagnosis": "Самодиагностика ТВ",
+    "com.mitv.alarmcenter": "Будильники и напоминания Xiaomi",
+    "com.xiaomi.mitv.health": "Mi Health",
+    "com.xiaomi.mitv.tvvideocall": "Видеозвонки MiTime",
+    "com.xiaomi.mitv.light": "Световые эффекты Xiaomi",
+    "com.xiaomi.aitranslate": "ИИ-перевод субтитров (занимает ~117 МБ памяти)",
+    "com.mitv.mivideoplayer": "Mi Video (китайский стриминг)",
+    "com.google.android.youtube.tvkids": "YouTube Kids",
+    "com.google.android.apps.tachyon": "Google Duo",
+    "com.tcl.browser": "Предустановленный браузер",
+    "com.emotn.browser": "Предустановленный браузер Emotn",
+    "com.android.camera2": "Камера Android",
+    "com.android.gallery3d": "Галерея Android",
+    "com.netflix.tokenmanager": "Токен входа в Netflix",
+    "com.dazn": "DAZN",
+    "com.wbd.hbomax": "HBO Max",
+    "com.wbd.stream": "Max",
+    "com.apple.atve.androidtv.appletv": "Apple TV",
+    "com.graymatrix.did": "ZEE5",
+    "com.zee5.xiaomiTV": "ZEE5",
+    "com.sonyliv": "SonyLIV",
+    "com.xiaomitv.sonyliv": "SonyLIV",
+    "com.newtv.cboxtv": "CCTV NewTV (Китай)",
+    "com.jio.media.stb.ondemand": "JioCinema / JioTV (Индия)",
+    "com.mxtech.videoplayer.television": "MX Player",
+    "com.formulaone.production": "F1 TV",
+    "com.fancode.tv": "FanCode (Индия)",
+    "com.suntv.sunnxt.mitv": "Sun NXT (Индия)",
+    "com.eros.mitv": "Eros Now (Индия)",
+    "com.discoveryplus.mitv": "discovery+",
+    "com.ddnational.prasarbharati": "DD National (Индия)",
+    "net.aljazeera.english": "Al Jazeera",
+    "com.aha.mitv": "aha (старая копия)",
+})
+FEATURES.update({
+    "com.xiaomi.mitv.smartpanel": "Панель по долгому нажатию Menu",
+    "com.google.android.tv": "Live Channels (эфирные каналы Google)",
+    "com.xiaomi.amazon.alexa": "Связка с Amazon Alexa",
+    "com.xiaomi.mi_connect_service": "Mi Connect: связь с телефоном Xiaomi",
+    "com.xiaomi.wakeupservice": "Фраза пробуждения китайского голосового помощника",
+    "com.xiaomi.mico.mqtt.service.application.tv": "Связь с колонкой Xiao AI",
+    "com.duokan.airkan.tvbox": "Приём трансляции DLNA (AirKan)",
+    "com.xiaomi.miplay": "MiPlay: трансляция с телефонов Xiaomi",
+    "com.xiaomi.eetv.litehome": "Второй домашний экран («офисный режим»)",
+    "com.xiaomi.account": "Аккаунт Xiaomi",
+    "com.xiaomi.account.auth": "Вход в аккаунт Xiaomi",
+    "com.mipay.wallet.tv": "Платежи Xiaomi (Китай)",
+    "com.xiaomi.mitv.pay": "Платежи Xiaomi",
+    "com.xiaomi.mibox.lockscreen": "Детский режим и блокировка",
+    "com.miui.hybrid.tv": "Среда мини-приложений Xiaomi",
+    "com.mitv.upgrader": "Обновление прошивки Xiaomi",
+    "com.mitv.ABUpdateStatus": "Состояние обновления прошивки",
+    "com.mitv.toolhouse": "Утилиты Xiaomi (Mi Home, очистка)",
+    "com.xiaomi.tvqs.overseas": "Быстрые настройки или аналитика Xiaomi (источники расходятся)",
+    "com.android.adservices.api": "Рекламная персонализация Android (Privacy Sandbox)",
+    "com.android.ondevicepersonalization.services": "Персонализация рекламы на устройстве",
+    "com.android.federatedcompute.services": "Федеративное обучение (персонализация)",
+})
+CAUTION.update({
+    "com.xiaomi.mitv.smartpanel": "на некоторых моделях (MiTV-ASTR0, MFTR0) через неё "
+                                 "переключаются источники, без неё не работает кнопка Menu",
+    "com.google.android.tv": "на ТВ с антенной пропадут эфирные каналы",
+    "com.xiaomi.wakeupservice": "перестанет откликаться китайский голосовой помощник",
+    "com.xiaomi.eetv.litehome": "это второй домашний экран",
+    "com.xiaomi.account": "нужен для платного контента и покупок Xiaomi",
+    "com.xiaomi.account.auth": "нужен для платного контента и покупок Xiaomi",
+    "com.mipay.wallet.tv": "перестанут работать покупки через Xiaomi",
+    "com.xiaomi.mitv.pay": "перестанут работать покупки через Xiaomi",
+    "com.xiaomi.mibox.lockscreen": "если стоит детский режим или PIN-код, он перестанет действовать",
+    "com.miui.hybrid.tv": "могут перестать открываться мини-приложения Xiaomi",
+    "com.mitv.upgrader": "перестанут приходить обновления прошивки",
+    "com.mitv.ABUpdateStatus": "перестанут приходить обновления прошивки",
+    "com.mitv.toolhouse": "мнения расходятся: на 5 моделях отключали, на остальных не трогали",
+    "com.xiaomi.tvqs.overseas": "в одних списках это панель быстрых настроек, в других "
+                                "отправка аналитики; после отключения проверьте быстрые настройки",
+    "com.android.adservices.api": "модуль системы Android, отключали только на двух моделях",
+    "com.android.ondevicepersonalization.services": "модуль системы Android, отключали "
+                                                    "только на двух моделях",
+    "com.android.federatedcompute.services": "модуль системы Android, отключали только на "
+                                             "двух моделях",
+    "com.netflix.tokenmanager": "нужен для входа в Netflix",
+    "com.netflix.ninja": "на некоторых моделях прошивка включает Netflix обратно при загрузке",
+    "com.xiaomi.mitv.mediaexplorer": "через него открываются фото и видео с флешки",
+    "com.mitv.videoplayer": "через него открываются видео с флешки и Mi Cast",
+})
+
 FEATURES.update({
     "com.xiaomi.wfdsinkhelperservice": "Приём трансляции экрана (Miracast)",
     "com.mitv.milinkservice": "Mi Cast и управление с телефона (приложение Mi Remote)",
@@ -185,10 +299,16 @@ KEEP = {
     "com.mitv.livetv.ci_mediatek": "Live TV для MediaTek: входы HDMI и антенна",
     "mitv.service": "основная системная служба Xiaomi",
     "com.mitv.overseaservice": "служба глобальной прошивки Xiaomi, кнопка Netflix на пульте",
-    "com.xiaomi.tvqs.overseas": "панель быстрых настроек",
     "com.mi.bluetooth": "сопряжение пульта",
     "com.xiaomi.android.tvsetup.partnercustomizer": "кнопки Netflix и Mi на пульте",
     "com.duokan.factorytest": "заводское тестовое меню Xiaomi, не мешает",
+    "com.mediatek.tv.agent": "питание, таймеры и кнопки пульта (MediaTek)",
+    "com.mediatek.hotkey.dispatcher": "кнопки пульта, в том числе выбор источника",
+    "com.mediatek.wwtv.tvcenter": "Live TV MediaTek: через него идёт картинка с HDMI",
+    "com.xiaomi.mitv.tvplayer": "Live TV и входы HDMI",
+    "com.mstar.netflixobserver": "кнопка Netflix на пульте",
+    "com.google.android.tungsten.setupwraith": "мастер настройки: сопряжение пульта и "
+                                               "сохранённая сеть Wi-Fi",
 }
 
 # Описания системных пакетов, которые встречаются, но в каталог не входят.
@@ -242,6 +362,46 @@ DESCRIPTIONS = {
     "com.mitv.upgrader": "служебный пакет Xiaomi, похоже на обновление (не подтверждено)",
     "com.xiaomi.mitv.scenemode": "режимы изображения Xiaomi (по названию, не подтверждено)",
 }
+
+try:
+    import xiaomi_db
+    MODEL_DB = xiaomi_db.MODELS
+except ImportError:
+    MODEL_DB = {}
+
+# Сколько моделей из базы отключали каждый пакет.
+COMMUNITY = {}
+for _key, _m in MODEL_DB.items():
+    for _p in _m["disabled"]:
+        COMMUNITY.setdefault(_p, []).append(_key)
+
+
+def find_model(model_id, codename, android):
+    """Ключ модели в базе: по названию модели, потом по кодовому имени."""
+    for field, value in (("ids", model_id), ("codename", codename)):
+        if not value:
+            continue
+        hits = [k for k, m in MODEL_DB.items()
+                if (value in m["ids"] if field == "ids" else m["codename"] == value)]
+        if hits:
+            same = [k for k in hits if MODEL_DB[k]["android"] == android]
+            return (same or hits)[0]
+    return None
+
+
+def community_note(pkg, ctx):
+    """Что о пакете известно по спискам сообщества. -> (текст, оставляли на этой модели)."""
+    here = ctx.get("db_model")
+    if here and pkg in MODEL_DB[here]["keep"]:
+        return "на вашей модели этот пакет оставляли намеренно", True
+    models = COMMUNITY.get(pkg, [])
+    if here and here in models:
+        own = " (по личному выбору)" if pkg in MODEL_DB[here]["personal"] else ""
+        return f"★ отключали на вашей модели{own}", False
+    if models:
+        return f"отключали на {len(models)} из {len(MODEL_DB)} моделей Xiaomi", False
+    return "", False
+
 
 # Пакеты, которые сами ставят рекламируемые приложения после обновлений.
 AUTOINSTALL = re.compile(r"^android\.autoinstalls\.config\.")
@@ -705,7 +865,25 @@ def gather_context():
                                    sh("dumpsys device_policy")))
     acc = sh("settings get secure enabled_accessibility_services")
     ctx["accessibility"] = {a.split("/")[0] for a in acc.split(":") if "/" in a}
+    ctx["model_id"] = sh("getprop ro.product.model").strip()
+    ctx["codename"] = sh("getprop ro.product.device").strip()
+    ctx["android"] = sh("getprop ro.build.version.release").strip().split(".")[0]
+    ctx["db_model"] = find_model(ctx["model_id"], ctx["codename"], ctx["android"])
+    # На Google TV мастер настройки объявляет себя домашним экраном: без штатного
+    # лаунчера система открывает его экран восстановления, а не новый лаунчер.
+    ctx["setup_home"] = any(re.search(r"setupwraith|RecoveryActivity", c)
+                            for c in full_components(query("HOME")))
     return ctx
+
+
+def model_summary(ctx):
+    key = ctx.get("db_model")
+    if key:
+        m = MODEL_DB[key]
+        return (f"Модель есть в базе: {m['title']}. Отмечено ★ то, что отключали "
+                f"именно на ней ({len(m['disabled'])} пакетов).")
+    return (f"Модели {ctx.get('model_id') or '?'} нет в базе: рекомендации по "
+            f"{len(MODEL_DB)} моделям Xiaomi.")
 
 
 def is_protected(pkg):
@@ -755,6 +933,14 @@ def assess(pkg, ctx):
         warn(f"работает с правами системы ({m.group(1)}); в списках сообщества "
              "отключается без проблем, но обязательно проверьте загрузку")
 
+    if ctx.get("setup_home") and pkg in STOCK_LAUNCHERS:
+        return BLOCK, ["на этой прошивке без штатного лаунчера домашним становится экран "
+                       "восстановления мастера настройки: ТВ уходит в перезагрузки, "
+                       "на одной модели это закончилось сбросом настроек"]
+    if pkg == "com.mitv.tvhome":
+        warn("на китайских прошивках и HyperOS система принимает как домашний экран "
+             "только лаунчеры из своего списка: без PatchWall может остаться чёрный "
+             "экран. Программа проверит, что новый лаунчер принят, и иначе оставит PatchWall")
     if pkg in ctx["home"]:
         others = ctx["home"] - {pkg}
         if not others:
@@ -775,6 +961,11 @@ def assess(pkg, ctx):
         warn(CAUTION[pkg])
     elif AUTOINSTALL.search(pkg):
         warn("мнения расходятся: в одних списках отключают, в других оставляют")
+    note, kept_here = community_note(pkg, ctx)
+    if kept_here:
+        warn(note)
+    elif note:
+        reasons.insert(0, note)
     if pkg in ctx["third_party"]:
         reasons.append("не системное: при удалении удалится полностью, "
                        "APK сохраню в бэкап")
@@ -1143,6 +1334,7 @@ UNKNOWN_DESC = "неизвестный пакет Xiaomi: удаляйте, то
 def scan(ctx, days, include_patchwall=True, skip=()):
     """Все кандидаты на удаление: [(заголовок, [(пакет, описание, уровень, причины)])]."""
     groups = []
+    print(model_summary(ctx))
     seen = set(PATCHWALL) | set(STOCK_LAUNCHERS) | set(skip)
     pw = [p for p in PATCHWALL if p in ctx["installed"]]
     if include_patchwall and pw:
@@ -1164,6 +1356,16 @@ def scan(ctx, days, include_patchwall=True, skip=()):
         groups.append((f"Не запускались больше {days} дней или ни разу", items))
         seen.update(p[0] for p in items)
 
+    here = ctx.get("db_model")
+    if here:
+        extra = [p for p in MODEL_DB[here]["disabled"]
+                 if p in ctx["installed"] and p not in seen and not is_protected(p)]
+        if extra:
+            groups.append(("Отключали на вашей модели (нет в каталоге)",
+                           [(p, describe(p) or "без описания", *assess(p, ctx))
+                            for p in extra]))
+            seen.update(extra)
+
     unknown = sorted(p for p in ctx["installed"]
                      if VENDOR_HINT.search(p) and p not in seen
                      and not is_protected(p))
@@ -1183,8 +1385,16 @@ def perform_removal(plan, ctx, model, method=DISABLE):
         def action(pkg):
             return uninstall(pkg, full=pkg in ctx["third_party"])
     print(f"Бэкап: {listfile}")
+    cur = (ctx["default_home"] or "").split("/")[0]
+    accepted = False
     if ctx["new_home"]:
-        set_home(ctx["new_home"])
+        accepted = set_home(ctx["new_home"])
+        if not accepted and cur in plan:
+            # Китайские прошивки, HyperOS и Google TV могут игнорировать выбор
+            # домашнего экрана. Тогда текущий лаунчер отключать нельзя.
+            plan = [p for p in plan if p != cur]
+            print(f"  ! Система не приняла {ctx['new_home']} как домашний экран, "
+                  f"поэтому {cur} оставлен включённым.")
     removed = []
     for pkg in plan:
         good, note = action(pkg)
@@ -1193,7 +1403,7 @@ def perform_removal(plan, ctx, model, method=DISABLE):
             removed.append(pkg)
     print(f"{'Отключено' if method == DISABLE else 'Удалено'}: "
           f"{len(removed)} из {len(plan)}.")
-    if removed and ctx["new_home"]:
+    if removed and ctx["new_home"] and accepted:
         ok = set_home(ctx["new_home"])
         print(f"Домашний экран: {ctx['new_home']}" + ("" if ok else
               " (система может один раз спросить, какой лаунчер использовать)"))

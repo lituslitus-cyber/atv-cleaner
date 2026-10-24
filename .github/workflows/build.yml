@@ -38,12 +38,13 @@ jobs:
           pyinstaller --onefile --windowed --name ATVCleaner
           --icon build/icon.ico --version-file build/version_info.txt
           --add-data "platform-tools;platform-tools" --add-data "build/icon.ico;."
+          --hidden-import xiaomi_db
           gui.py
 
       - name: Проверка, что модули собраны
         shell: pwsh
         run: |
-          python -c "import gui, atv_cleaner"
+          python -c "import gui, atv_cleaner, xiaomi_db; assert atv_cleaner.MODEL_DB"
           if (-not (Test-Path dist/ATVCleaner.exe)) { exit 1 }
           "{0:N1} МБ" -f ((Get-Item dist/ATVCleaner.exe).Length / 1MB)
           $vi = (Get-Item dist/ATVCleaner.exe).VersionInfo
