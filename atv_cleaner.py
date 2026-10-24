@@ -363,43 +363,221 @@ DESCRIPTIONS = {
     "com.xiaomi.mitv.scenemode": "режимы изображения Xiaomi (по названию, не подтверждено)",
 }
 
+# ---------------------------------------------------------------------------
+# TCL (по 62 спискам cleanyourtv и защитному списку free-my-tv)
+# ---------------------------------------------------------------------------
+
+JUNK.update({
+    "com.tcl.esticker": "Наклейки демо-режима магазина (энергоэтикетка)",
+    "com.tcl.messagebox": "Промо-сообщения TCL",
+    "com.tcl.logkit": "Сбор и отправка логов TCL",
+    "com.tcl.bi": "Аналитика TCL (BI, Firebase)",
+    "com.tcl.interactive": "Фоновая аналитика TCL (TIAS)",
+    "com.tcl.exhibit": "Демо-режим магазина",
+    "com.tcl.hotelmenu": "Гостиничный режим",
+    "com.tcl.overseasappshow": "Витрина рекламируемых приложений",
+    "com.tcl.waterfall.overseas": "Лента контента TCL Channel",
+    "com.tcl.bootadservice": "Полноэкранная реклама при включении",
+    "com.tcl.smartlink.core": "Тихая установка приложений TCL",
+    "com.esaba.downloader": "Фоновая загрузка приложений и контента",
+    "com.tcl.cyberui": "Контент-сервис TCL",
+    "com.tcl.appreciate.art": "Заставка-галерея с платной подпиской",
+    "com.tcl.tvweishi": "Очистка «TV Guard»",
+    "com.tcl.tv.tclhome_passive": "Контент TCL на главном экране при загрузке",
+    "com.tcl.guard": "Менеджер приложений и очистка TCL",
+    "com.tcl.xian.StartandroidService": "Фоновая служба отчётов TCL",
+})
+APPS.update({
+    "com.tcl.channelplus": "TCL Channel: бесплатные каналы с рекламой",
+    "com.tcl.tv.plus": "TCL TV+: бесплатные каналы",
+    "com.tcl.ocean.instructions": "Руководство пользователя TCL",
+    "com.tcl.repairguide": "Справка по ремонту и самодиагностика",
+    "com.tcl.playskill": "Советы по использованию",
+    "com.tcl.copydatatotv": "Перенос данных с телефона на ТВ",
+    "com.tcl.notereminder": "Заметки и напоминания",
+    "com.tcl.browser": "Браузер TCL BrowseHere",
+    "com.tcl.appmarket2": "Магазин приложений TCL",
+    "com.tcl.ffkaraoke": "Караоке",
+    "com.tcl.ffeducation": "Детский и обучающий контент",
+    "com.tcl.ui_mediaCenter": "Медиацентр: фото и видео с флешки и DLNA",
+    "com.tcl.gallery": "Галерея TCL",
+    "com.tcl.audioplayer": "Аудиоплеер TCL",
+    "com.tcl.imageplayer": "Просмотр фото TCL",
+    "com.tcl.videoplayer": "Видеоплеер TCL",
+    "com.tcl.magiconnectfree": "Реклама приложения MagiConnect (T-Cast)",
+    "com.google.android.apps.tv.dreamx": "Заставка Google TV Ambient (с промо)",
+    "com.tubitv": "Tubi",
+    "tv.twitch.android.app": "Twitch",
+    "tv.wuaki.apptv": "Rakuten TV",
+    "au.com.stan.and": "Stan (Австралия)",
+    "air.ITVMobilePlayer": "ITVX (Великобритания)",
+    "com.channel5.my5": "My5 (Великобритания)",
+    "br.com.claro.now.smarttvclient": "Claro TV+ (Бразилия)",
+    "com.mercadolibre.android.mplay_tv": "Mercado Play",
+    "com.rma.speedtesttv": "Speedtest",
+    "com.google.android.youtube.tvunplugged": "YouTube TV",
+})
+FEATURES.update({
+    "com.tcl.ttvs": "Служба TCL: отслеживание просмотров Samba TV, аналитика, обновления",
+    "com.tcl.smartalexa": "Связка с Amazon Alexa",
+    "com.tcl.usercenter": "Аккаунт TCL",
+    "com.tcl.dashboard": "Панель «TCL Home»: промо и подарки",
+    "com.tcl.partnercustomizer": "Промо-плитки T-Channel на главном экране",
+    "com.tcl.t_solo": "T-Solo: звук в Bluetooth-наушники",
+    "com.tcl.UpdatePeripheral": "Обновление прошивки саундбара TCL",
+    "com.tcl.gamebar": "Игровая панель и режим VRR",
+    "com.tcl.hearaid": "Проверка слуха и подстройка громкости",
+    "com.tcl.miracast": "Приём трансляции экрана (Miracast)",
+    "com.tcl.airplay2": "AirPlay",
+    "com.tcl.MultiScreenInteraction_TV": "MagiConnect: связь с телефоном и трансляция",
+    "com.tcl.versionUpdateApp": "Обновление прошивки TCL",
+    "com.tcl.useragreement": "Экраны соглашений TCL",
+    "com.tcl.android.webview": "Встроенный браузерный движок TCL",
+    "com.tcl.keyhelp": "Подсказки по кнопкам пульта",
+    "com.tcl.eva": "Голосовой слой TCL",
+})
+CAUTION.update({
+    "com.tcl.ttvs": "на C7K и других G08 это ещё и обновление прошивки: без него обновления "
+                    "не приходят (включите его, чтобы проверить обновление); на части старых "
+                    "моделей free-my-tv держит его под защитой",
+    "com.tcl.tv.tclhome_passive": "мнения расходятся: в 36 списках отключали, free-my-tv "
+                                  "держит под защитой",
+    "com.tcl.guard": "мнения расходятся: в 38 списках отключали, free-my-tv держит под защитой",
+    "com.tcl.dashboard": "мнения расходятся: в одних списках это реклама, в других панель, "
+                         "которую нужно оставить",
+    "com.tcl.partnercustomizer": "мнения расходятся: в 40 списках отключали, free-my-tv "
+                                 "держит под защитой",
+    "com.tcl.gamebar": "нужна для игрового режима и VRR с приставками",
+    "com.tcl.hearaid": "мнения расходятся: на части моделей её оставляли",
+    "com.tcl.usercenter": "нужен для аккаунта TCL; на некоторых прошивках включается обратно",
+    "com.tcl.UpdatePeripheral": "перестанет обновляться прошивка саундбара TCL",
+    "com.tcl.versionUpdateApp": "перестанут приходить обновления прошивки",
+    "com.tcl.useragreement": "мнения расходятся: часть владельцев оставляла",
+    "com.tcl.android.webview": "мнения расходятся; основным браузерным движком остаётся Google",
+    "com.tcl.keyhelp": "мнения расходятся: на части моделей её оставляли",
+    "com.tcl.eva": "мнения расходятся: голос работает через Google, но на части моделей "
+                   "её оставляли",
+    "com.tcl.miracast": "перестанет работать трансляция экрана на ТВ",
+    "com.tcl.airplay2": "перестанет работать AirPlay с iPhone и Mac",
+    "com.tcl.MultiScreenInteraction_TV": "перестанут работать MagiConnect и T-Cast",
+    "com.tcl.ui_mediaCenter": "через него открываются фото и видео с флешки",
+    "com.tcl.gallery": "через неё открываются фото с флешки",
+    "com.tcl.videoplayer": "через него открываются видео с флешки",
+    "com.google.android.apps.tv.dreamx": "сначала выберите другую заставку в настройках",
+    "com.tcl.xian.StartandroidService": "мнения расходятся: на части моделей её оставляли",
+})
+KEEP.update({
+    "com.tcl.tv": "Live TV и входы HDMI",
+    "com.tcl.tvinput": "входы HDMI, AV и антенна",
+    "com.tcl.tvpassthrough": "передача сигнала с HDMI",
+    "com.tcl.sourcemananger": "переключение источников",
+    "com.tcl.suspension": "панель источников, которую открывает кнопка Input на пульте",
+    "com.tcl.autopair": "сопряжение пульта",
+    "com.tcl.tcl_bt_rcu_service": "Bluetooth-пульт",
+    "com.tcl.keycustomfunctionservice": "кнопки пульта",
+    "com.tcl.globalkeyoverlay": "кнопки пульта",
+    "com.tcl.systemserver": "системная служба TCL",
+    "com.tcl.system.server": "системная служба TCL",
+    "com.tcl.systemui.plugin": "системный интерфейс TCL",
+    "com.tcl.providers.config": "настройки системы TCL",
+    "com.tcl.initsetup": "первичная настройка TCL",
+    "com.tcl.factory.view": "заводское меню TCL: не отключать и не запускать",
+    "com.tcl.settings": "настройки TCL",
+    "com.tcl.micmanager": "микрофон пульта",
+    "com.tcl.common.shortcutmenu": "быстрое меню TCL",
+    "com.tcl.framework.custom": "системная часть TCL",
+    "com.tvos": "системная часть TCL, назначение не выяснено",
+    "com.tpa.kb": "держит разрешения Live TV и каналов TCL, назначение не выяснено",
+    "tv.mopa.ginga": "Ginga: эфирное ТВ в Бразилии",
+})
+# Пакеты, которые проверены по источникам и не должны блокироваться общими
+# шаблонами защиты (у Xiaomi partnercustomizer нужен пульту, у TCL это промо).
+REVIEWED = {"com.tcl.partnercustomizer", "com.tcl.android.webview"}
+
+# ---------------------------------------------------------------------------
+# База устройств
+# ---------------------------------------------------------------------------
+
 try:
-    import xiaomi_db
-    MODEL_DB = xiaomi_db.MODELS
+    import device_db
+    MODEL_DB = device_db.MODELS
 except ImportError:
     MODEL_DB = {}
 
-# Сколько моделей из базы отключали каждый пакет.
+# Какие модели каждой марки отключали каждый пакет: COMMUNITY[марка][пакет].
 COMMUNITY = {}
 for _key, _m in MODEL_DB.items():
     for _p in _m["disabled"]:
-        COMMUNITY.setdefault(_p, []).append(_key)
+        COMMUNITY.setdefault(_m["brand"], {}).setdefault(_p, []).append(_key)
 
 
-def find_model(model_id, codename, android):
-    """Ключ модели в базе: по названию модели, потом по кодовому имени."""
-    for field, value in (("ids", model_id), ("codename", codename)):
-        if not value:
-            continue
-        hits = [k for k, m in MODEL_DB.items()
-                if (value in m["ids"] if field == "ids" else m["codename"] == value)]
-        if hits:
-            same = [k for k in hits if MODEL_DB[k]["android"] == android]
-            return (same or hits)[0]
-    return None
+def detect_brand(text):
+    t = text.lower()
+    if "xiaomi" in t or "redmi" in t:
+        return "Xiaomi"
+    if "tcl" in t:
+        return "TCL"
+    return ""
+
+
+def find_models(ctx):
+    """Подходящие записи базы. -> (точная модель или None, списки той же платформы).
+
+    Xiaomi различаются по ro.product.model. У TCL модель всегда «Smart TV Pro»,
+    поэтому берём все списки той же платформы (ro.product.device, product, Android).
+    """
+    brand, android = ctx.get("brand"), ctx.get("android")
+    if brand == "Xiaomi":
+        for field, value in (("ids", ctx.get("model_id")), ("codename", ctx.get("codename"))):
+            if not value:
+                continue
+            hits = [k for k, m in MODEL_DB.items() if m["brand"] == "Xiaomi"
+                    and (value in m["ids"] if field == "ids" else m["codename"] == value)]
+            if hits:
+                same = [k for k in hits if MODEL_DB[k]["android"] == android]
+                key = (same or hits)[0]
+                return key, [key]
+        return None, []
+    if brand == "TCL":
+        device = ctx.get("codename") or ""
+        product = (ctx.get("product") or "").split("_")[0]
+        cands = [k for k, m in MODEL_DB.items() if m["brand"] == "TCL"
+                 and device and (m["codename"] == device or m["codename"] == product)]
+        same = [k for k in cands if MODEL_DB[k]["android"] == android] or cands
+        # Одна платформа (BeyondTV4) бывает и на Android TV, и на Google TV.
+        kind = "Google TV" if ctx.get("google_tv") else "Android TV"
+        same = [k for k in same if MODEL_DB[k]["firmware"] == kind] or same
+        if product:
+            # Списки без указанного product тоже подходят: он просто не записан.
+            exact = [k for k in same if MODEL_DB[k]["product"].split("_")[0] in (product, "")]
+            same = exact or same
+        return None, same
+    return None, []
 
 
 def community_note(pkg, ctx):
-    """Что о пакете известно по спискам сообщества. -> (текст, оставляли на этой модели)."""
-    here = ctx.get("db_model")
-    if here and pkg in MODEL_DB[here]["keep"]:
-        return "на вашей модели этот пакет оставляли намеренно", True
-    models = COMMUNITY.get(pkg, [])
-    if here and here in models:
-        own = " (по личному выбору)" if pkg in MODEL_DB[here]["personal"] else ""
-        return f"★ отключали на вашей модели{own}", False
+    """Что о пакете известно по спискам сообщества. -> (текст, нужно предупредить)."""
+    brand = ctx.get("brand")
+    here = ctx.get("db_lists") or []
+    if here:
+        off = [k for k in here if pkg in MODEL_DB[k]["disabled"]]
+        kept = [k for k in here if pkg in MODEL_DB[k]["keep"]]
+        where = ("на вашей модели" if ctx.get("db_model") else
+                 f"на вашей платформе {ctx.get('platform')}")
+        if kept and not off:
+            return f"{where} этот пакет оставляли намеренно", True
+        if kept and off:
+            return (f"{where} мнения расходятся: отключали в {len(off)}, "
+                    f"оставляли в {len(kept)} списках"), True
+        if off:
+            if ctx.get("db_model"):
+                own = " (по личному выбору)" if pkg in MODEL_DB[here[0]]["personal"] else ""
+                return f"★ отключали на вашей модели{own}", False
+            return f"★ отключали {where}: в {len(off)} из {len(here)} списков", False
+    models = COMMUNITY.get(brand, {}).get(pkg, [])
     if models:
-        return f"отключали на {len(models)} из {len(MODEL_DB)} моделей Xiaomi", False
+        total = sum(m["brand"] == brand for m in MODEL_DB.values())
+        return f"отключали на {len(models)} из {total} моделей {brand}", False
     return "", False
 
 
@@ -454,7 +632,8 @@ PROTECTED = [re.compile(p) for p in (
     r"tvsearch|googlequicksearchbox|velvet",
 )]
 
-VENDOR_HINT = re.compile(r"xiaomi|mitv|miui|^com\.mi\.")
+VENDOR_HINT = re.compile(r"xiaomi|mitv|miui|^com\.mi\.|^com\.duokan\.|^com\.tcl\.|"
+                         r"^com\.tpa\.|^com\.tvos")
 
 # Приложения, которые работают без запуска вручную: трансляция, фон.
 BACKGROUND_HINT = re.compile(r"cast|miracast|airplay|airscreen|dlna|mirror|"
@@ -583,10 +762,76 @@ def try_connect(addr):
         return True
     print(f"Не удалось подключиться: {out or 'нет ответа'}")
     if "refused" in out.lower():
-        print("Телевизор отклонил подключение: включите на нём «Отладку по сети».")
+        print("Телевизор отклонил подключение: включите на нём «Отладку по сети». "
+              "На Android 11+ (например, TCL C7K) вместо неё бывает только «Беспроводная "
+              "отладка»: нужна разовая привязка по коду («🔑 Сопряжение по коду»).")
     else:
         print("Проверьте IP и что компьютер и ТВ в одной сети.")
     return False
+
+
+# ---------------------------------------------------------------------------
+# Беспроводная отладка Android 11+: сопряжение по коду
+# ---------------------------------------------------------------------------
+
+def mdns_services():
+    """ТВ, которые объявляют беспроводную отладку. -> {ip: {"connect": порт, "pair": порт}}."""
+    found = {}
+    for line in run([ADB, "mdns", "services"], timeout=15)[1].splitlines():
+        m = re.search(r"(\d+\.\d+\.\d+\.\d+):(\d+)", line)
+        if not m:
+            continue
+        kind = ("pair" if "_adb-tls-pairing" in line else
+                "connect" if "_adb-tls-connect" in line else None)
+        if kind:
+            found.setdefault(m.group(1), {})[kind] = int(m.group(2))
+    return found
+
+
+def pair_and_connect(ip, pair_port, code, connect_port=None, progress=print):
+    """Сопряжение по коду с экрана ТВ, подключение и перевод ТВ на порт 5555.
+
+    После `adb tcpip 5555` ТВ дальше подключается просто по IP (до перезагрузки).
+    Возвращает итоговый адрес или None.
+    """
+    global SERIAL, CONNECT_ADDR
+    progress(f"Сопряжение с {ip}:{pair_port}...")
+    out = run([ADB, "pair", f"{ip}:{pair_port}", code], timeout=40)[1]
+    if "success" not in out.lower():
+        progress(f"Сопряжение не удалось: {out or 'нет ответа'}. Проверьте код и порт: "
+                 "они меняются при каждом открытии окна «Подключение с кодом».")
+        return None
+    progress("Сопряжение выполнено.")
+    if not connect_port:
+        # Порт подключения ТВ объявляет в сети сам; иначе его видно на экране
+        # «Беспроводная отладка» рядом с IP.
+        for _ in range(5):
+            connect_port = mdns_services().get(ip, {}).get("connect")
+            if connect_port:
+                break
+            time.sleep(1)
+    if not connect_port:
+        progress("Не нашёл порт подключения: введите его с экрана «Беспроводная отладка» "
+                 "(число после двоеточия в строке «IP-адрес и порт»).")
+        return None
+    addr = f"{ip}:{connect_port}"
+    out = adb_connect(addr)
+    if "connected" not in out:
+        progress(f"Не удалось подключиться к {addr}: {out or 'нет ответа'}")
+        return None
+    SERIAL = CONNECT_ADDR = addr
+    # Постоянный порт: дальше хватит IP, без кода (держится до перезагрузки ТВ).
+    run([ADB, "-s", addr, "tcpip", str(ADB_PORT)], timeout=20)
+    time.sleep(2)
+    fixed = f"{ip}:{ADB_PORT}"
+    if "connected" in adb_connect(fixed):
+        run([ADB, "disconnect", addr], timeout=10)
+        SERIAL = CONNECT_ADDR = fixed
+        progress(f"Подключено: {fixed}. До перезагрузки ТВ можно подключаться просто по IP.")
+        return fixed
+    progress(f"Подключено: {addr}. Порт 5555 не включился, после перезагрузки ТВ "
+             "сопряжение по коду понадобится снова.")
+    return addr
 
 
 # ---------------------------------------------------------------------------
@@ -690,6 +935,12 @@ def scan_network(extra_ips=(), progress=print):
                 h, p = futures[fut]
                 found.setdefault(h, set()).add(p)
 
+    # ТВ с беспроводной отладкой (Android 11+) слушают случайный порт и
+    # объявляют себя в сети: так их видно, даже если 5555 закрыт.
+    tls = mdns_services()
+    for ip in tls:
+        found.setdefault(ip, set()).add(ATV_REMOTE_PORT)
+
     devices = []
     for ip in sorted(found, key=lambda x: tuple(map(int, x.split(".")))):
         open_ports = found[ip]
@@ -703,9 +954,12 @@ def scan_network(extra_ips=(), progress=print):
         dev = {"ip": ip, "name": name, "adb": ADB_PORT in open_ports,
                "remote": ATV_REMOTE_PORT in open_ports, "cast": CAST_PORT in open_ports,
                "model": "", "android": "", "is_tv": None}
+        dev["tls"] = tls.get(ip, {})
         if dev["adb"]:
             progress(f"Опрашиваю {ip} по ADB...")
             dev.update(probe_adb(ip))
+        elif dev["tls"]:
+            dev["state"] = "беспроводная отладка: нужно сопряжение по коду"
         else:
             dev["state"] = "отладка по сети выключена"
         # Устройство с ADB, которое само сказало, что оно не ТВ (телефон), скрываем.
@@ -867,8 +1121,14 @@ def gather_context():
     ctx["accessibility"] = {a.split("/")[0] for a in acc.split(":") if "/" in a}
     ctx["model_id"] = sh("getprop ro.product.model").strip()
     ctx["codename"] = sh("getprop ro.product.device").strip()
+    ctx["product"] = sh("getprop ro.product.name").strip()
     ctx["android"] = sh("getprop ro.build.version.release").strip().split(".")[0]
-    ctx["db_model"] = find_model(ctx["model_id"], ctx["codename"], ctx["android"])
+    ctx["brand"] = detect_brand(sh("getprop ro.product.manufacturer") + " " +
+                                sh("getprop ro.product.brand"))
+    ctx["google_tv"] = "com.google.android.apps.tv.launcherx" in everything
+    ctx["db_model"], ctx["db_lists"] = find_models(ctx)
+    ctx["platform"] = (ctx["codename"] + (f" / {ctx['product']}" if ctx["product"] else "")
+                       + f", Android {ctx['android']}")
     # На Google TV мастер настройки объявляет себя домашним экраном: без штатного
     # лаунчера система открывает его экран восстановления, а не новый лаунчер.
     ctx["setup_home"] = any(re.search(r"setupwraith|RecoveryActivity", c)
@@ -877,17 +1137,26 @@ def gather_context():
 
 
 def model_summary(ctx):
-    key = ctx.get("db_model")
+    brand = ctx.get("brand")
+    key, lists = ctx.get("db_model"), ctx.get("db_lists") or []
     if key:
         m = MODEL_DB[key]
         return (f"Модель есть в базе: {m['title']}. Отмечено ★ то, что отключали "
                 f"именно на ней ({len(m['disabled'])} пакетов).")
-    return (f"Модели {ctx.get('model_id') or '?'} нет в базе: рекомендации по "
-            f"{len(MODEL_DB)} моделям Xiaomi.")
+    if lists:
+        names = ", ".join(sorted({re.split(r" \(|,| —", MODEL_DB[k]["title"])[0]
+                                  for k in lists}))
+        return (f"Платформа {ctx.get('platform')} есть в базе: {len(lists)} списков "
+                f"({names}). Отмечено ★ то, что на ней отключали.")
+    total = sum(m["brand"] == brand for m in MODEL_DB.values())
+    if total:
+        return (f"Модели {ctx.get('model_id') or '?'} ({ctx.get('platform')}) нет в "
+                f"базе: рекомендации по {total} моделям {brand}.")
+    return "Этой марки нет в базе: рекомендации только по общему каталогу."
 
 
 def is_protected(pkg):
-    if AUTOINSTALL.search(pkg):
+    if AUTOINSTALL.search(pkg) or pkg in REVIEWED:
         return False
     return pkg in KEEP or any(p.search(pkg) for p in PROTECTED)
 
@@ -1328,7 +1597,7 @@ def device_info():
     return model, sh("getprop ro.build.version.release")
 
 
-UNKNOWN_DESC = "неизвестный пакет Xiaomi: удаляйте, только если знаете, что это"
+UNKNOWN_DESC = "неизвестный пакет производителя: трогайте, только если знаете, что это"
 
 
 def scan(ctx, days, include_patchwall=True, skip=()):
@@ -1356,12 +1625,19 @@ def scan(ctx, days, include_patchwall=True, skip=()):
         groups.append((f"Не запускались больше {days} дней или ни разу", items))
         seen.update(p[0] for p in items)
 
-    here = ctx.get("db_model")
-    if here:
-        extra = [p for p in MODEL_DB[here]["disabled"]
-                 if p in ctx["installed"] and p not in seen and not is_protected(p)]
+    lists = ctx.get("db_lists") or []
+    if lists:
+        # Для платформы TCL — то, что отключали хотя бы в трети её списков.
+        need = 1 if ctx.get("db_model") else max(1, len(lists) // 3)
+        counts = {}
+        for k in lists:
+            for p in MODEL_DB[k]["disabled"]:
+                counts[p] = counts.get(p, 0) + 1
+        extra = sorted(p for p, n in counts.items() if n >= need
+                       and p in ctx["installed"] and p not in seen and not is_protected(p))
         if extra:
-            groups.append(("Отключали на вашей модели (нет в каталоге)",
+            where = "модели" if ctx.get("db_model") else "платформе"
+            groups.append((f"Отключали на вашей {where} (нет в каталоге)",
                            [(p, describe(p) or "без описания", *assess(p, ctx))
                             for p in extra]))
             seen.update(extra)
@@ -1370,7 +1646,7 @@ def scan(ctx, days, include_patchwall=True, skip=()):
                      if VENDOR_HINT.search(p) and p not in seen
                      and not is_protected(p))
     if unknown:
-        groups.append(("Прочие пакеты Xiaomi (не из списка)",
+        groups.append((f"Прочие пакеты {ctx.get('brand') or 'производителя'} (не из списка)",
                        [(p, describe(p) or UNKNOWN_DESC, *assess(p, ctx))
                         for p in unknown]))
     return groups
@@ -1619,6 +1895,8 @@ def main():
     ap.add_argument("--uninstall", action="store_true",
                     help="удалять пакеты (pm uninstall --user 0), а не отключать")
     ap.add_argument("--restore", metavar="FILE", help="вернуть пакеты из бэкапа removed.txt")
+    ap.add_argument("--pair", nargs=2, metavar=("IP:ПОРТ", "КОД"),
+                    help="сопряжение по коду с экрана «Беспроводная отладка» (Android 11+)")
     ap.add_argument("--screen", action="store_true",
                     help="показать экран ТВ в окне (scrcpy)")
     ap.add_argument("--scan", action="store_true",
@@ -1627,6 +1905,15 @@ def main():
                     help="установить на ТВ файлы .apk / .apks / .xapk")
     args = ap.parse_args()
     ADB = args.adb
+
+    if args.pair:
+        ensure_adb()
+        run([ADB, "start-server"], timeout=30)
+        host, _, port = args.pair[0].partition(":")
+        addr = pair_and_connect(host, port, args.pair[1])
+        if addr:
+            print(f"Дальше: python atv_cleaner.py --connect {addr.split(':')[0]}")
+        return
 
     if args.scan:
         ensure_adb()

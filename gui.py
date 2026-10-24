@@ -26,8 +26,8 @@ DEBUG_HELP = """Как включить отладку на телевизоре
 1. Включите режим разработчика
    • Android TV (Xiaomi Mi TV, Mi Box S): Настройки → Настройки устройства →
      Об устройстве → 7 раз нажмите «Сборка».
-   • Google TV (Xiaomi TV A, Mi Box 2-го поколения): Настройки → Система →
-     Об устройстве → 7 раз нажмите «Сборка ОС Android TV».
+   • Google TV (Xiaomi TV A, Mi Box 2-го поколения, TCL C7K, C647): Настройки →
+     Система → Об устройстве → 7 раз нажмите «Сборка ОС Android TV».
    Появится надпись «Вы стали разработчиком».
 
 2. Включите отладку
@@ -35,6 +35,12 @@ DEBUG_HELP = """Как включить отладку на телевизоре
    или в «Системе»). Включите «Отладка по USB» и, если есть такой пункт,
    «Отладка по сети» (может называться «ADB по сети»). Если пункта про сеть
    нет, на многих ТВ подключение по сети работает и с одной «Отладкой по USB».
+
+   Android 11 и новее (например, TCL C7K на Android 14): если есть только
+   «Беспроводная отладка», включите её, откройте «Подключение с кодом» и
+   нажмите «🔑 Сопряжение по коду» в программе: введите IP, порт и шестизначный
+   код с экрана ТВ. Это нужно один раз, дальше программа подключается по IP.
+   Беспроводная отладка включается только по Wi-Fi, не по кабелю.
 
 3. Узнайте IP телевизора
    Настройки → Сеть и Интернет → ваша сеть Wi-Fi (или Об устройстве → Статус).
@@ -44,8 +50,9 @@ DEBUG_HELP = """Как включить отладку на телевизоре
    При первом подключении на экране ТВ появится «Разрешить отладку?».
    Отметьте «Всегда разрешать с этого компьютера» и нажмите OK.
 
-На многих Xiaomi отладка по сети выключается после перезагрузки ТВ.
-Если программа перестала видеть телевизор, включите её снова."""
+На многих Xiaomi и TCL отладка по сети выключается после перезагрузки ТВ.
+Если программа перестала видеть телевизор, включите её снова (на Android 11+
+с беспроводной отладкой — снова сопряжение по коду)."""
 
 PALETTES = {
     "light": dict(bg="#f3f3f3", fg="#1f1f1f", field="#ffffff", alt="#e6e6e6",
@@ -209,6 +216,8 @@ class DeviceDialog(tk.Toplevel):
         bar.pack(fill="x", pady=(8, 0))
         ttk.Button(bar, text="❓ Как включить отладку",
                    command=app.show_help).pack(side="left")
+        ttk.Button(bar, text="🔑 Сопряжение по коду",
+                   command=self.pair).pack(side="left", padx=6)
         ttk.Button(bar, text="Закрыть", command=self.destroy).pack(side="right")
         ttk.Button(bar, text="🔄 Искать снова", command=self.again).pack(side="right", padx=6)
         self.btn_ok = ttk.Button(bar, text="Подключить", command=self.choose)
@@ -218,9 +227,22 @@ class DeviceDialog(tk.Toplevel):
 
     def choose(self):
         ip = self.tree.focus()
-        if ip:
-            self.destroy()
+        if not ip:
+            return
+        d = self.devices[ip]
+        self.destroy()
+        if not d["adb"] and d.get("tls"):
+            # Беспроводная отладка: сначала сопряжение по коду.
+            PairDialog(self.app, ip, d["tls"].get("pair", ""), d["tls"].get("connect", ""))
+        else:
             self.app.use_device(ip)
+
+    def pair(self):
+        ip = self.tree.focus() if self.tree.winfo_ismapped() else ""
+        d = self.devices.get(ip, {})
+        self.destroy()
+        PairDialog(self.app, ip, d.get("tls", {}).get("pair", ""),
+                   d.get("tls", {}).get("connect", ""))
 
     def again(self):
         self.destroy()
@@ -244,18 +266,81 @@ class HelpDialog(tk.Toplevel):
     def __init__(self, app):
         super().__init__(app)
         self.title("Как включить отладку")
-        self.geometry("680x560")
+        self.geometry("700x720")
         self.transient(app)
         self.configure(bg=app.colors["bg"])
         set_titlebar(self, app.theme == "dark")
         frame = ttk.Frame(self, padding=8)
         frame.pack(fill="both", expand=True)
-        help_text(frame, app).pack(fill="both", expand=True)
+        help_text(frame, app, height=32).pack(fill="both", expand=True)
         bar = ttk.Frame(frame)
         bar.pack(fill="x", pady=(8, 0))
         ttk.Button(bar, text="Закрыть", command=self.destroy).pack(side="right")
         ttk.Button(bar, text="📡 Найти ТВ в сети",
                    command=lambda: (self.destroy(), app.find_devices())).pack(side="right", padx=6)
+        ttk.Button(bar, text="🔑 Сопряжение по коду",
+                   command=lambda: (self.destroy(), PairDialog(app, app.ip.get()))).pack(side="right")
+
+
+class PairDialog(tk.Toplevel):
+    """Сопряжение по коду для «Беспроводной отладки» Android 11+."""
+
+    def __init__(self, app, ip="", pair_port="", connect_port=""):
+        super().__init__(app)
+        self.app = app
+        self.title("Сопряжение по коду")
+        self.geometry("600x380")
+        self.transient(app)
+        self.configure(bg=app.colors["bg"])
+        set_titlebar(self, app.theme == "dark")
+        frame = ttk.Frame(self, padding=12)
+        frame.pack(fill="both", expand=True)
+        ttk.Label(frame, wraplength=570, justify="left", text=(
+            "На ТВ: Настройки → Система → Для разработчиков → Беспроводная отладка → "
+            "«Подключение с кодом». На экране появятся IP-адрес с портом и "
+            "шестизначный код: введите их ниже. Окно на ТВ не закрывайте, пока "
+            "идёт сопряжение.")).pack(anchor="w", pady=(0, 10))
+        self.ip = tk.StringVar(value=ip.split(":")[0])
+        self.pair_port = tk.StringVar(value=str(pair_port or ""))
+        self.code = tk.StringVar()
+        self.connect_port = tk.StringVar(value=str(connect_port or ""))
+        grid = ttk.Frame(frame)
+        grid.pack(fill="x")
+        for row, (label, var, width) in enumerate((
+                ("IP телевизора:", self.ip, 18),
+                ("Порт из окна с кодом:", self.pair_port, 8),
+                ("Код (6 цифр):", self.code, 10),
+                ("Порт подключения (необязательно):", self.connect_port, 8))):
+            ttk.Label(grid, text=label).grid(row=row, column=0, sticky="w", pady=3)
+            e = ttk.Entry(grid, textvariable=var, width=width)
+            e.grid(row=row, column=1, sticky="w", padx=8, pady=3)
+            if row == 2:
+                e.focus_set()
+                e.bind("<Return>", lambda ev: self.go())
+        ttk.Label(frame, style="Muted.TLabel", wraplength=570, justify="left", text=(
+            "Порт подключения — число после двоеточия в строке «IP-адрес и порт» на "
+            "самом экране «Беспроводная отладка» (не в окне с кодом). Обычно "
+            "программа находит его сама.")).pack(anchor="w", pady=(10, 0))
+        bar = ttk.Frame(frame)
+        bar.pack(fill="x", side="bottom")
+        ttk.Button(bar, text="Отмена", command=self.destroy).pack(side="right")
+        ttk.Button(bar, text="🔑 Сопрячь и подключить", command=self.go).pack(
+            side="right", padx=6)
+
+    def go(self):
+        ip, port, code = self.ip.get().strip(), self.pair_port.get().strip(), self.code.get().strip()
+        if not re.fullmatch(r"\d{1,3}(\.\d{1,3}){3}", ip):
+            messagebox.showerror(APP_TITLE, "Введите IP телевизора, например 192.168.1.50.",
+                                 parent=self)
+            return
+        if not port.isdigit() or not re.fullmatch(r"\d{6}", code):
+            messagebox.showerror(APP_TITLE, "Нужны порт из окна с кодом и шестизначный код.",
+                                 parent=self)
+            return
+        cport = self.connect_port.get().strip()
+        cport = int(cport) if cport.isdigit() else None
+        self.destroy()
+        self.app.pair(ip, int(port), code, cport)
 
 
 class QueueWriter:
@@ -642,6 +727,22 @@ class App(tk.Tk):
     def show_help(self):
         HelpDialog(self)
 
+    def pair(self, ip, pair_port, code, connect_port=None):
+        def work():
+            core.ensure_adb()
+            core.run([core.ADB, "start-server"], timeout=30)
+            print()
+            return core.pair_and_connect(ip, pair_port, code, connect_port)
+
+        def done(addr):
+            if not addr:
+                messagebox.showwarning(APP_TITLE, "Сопряжение не удалось, причина в журнале.")
+                return
+            # Порт 5555 не пишем: так поле IP работает и при следующем запуске.
+            self.ip.set(addr[:-5] if addr.endswith(":5555") else addr)
+            self.connect()
+        self.run_bg(work, done)
+
     def use_device(self, ip):
         self.ip.set(ip)
         self.connect()
@@ -710,7 +811,8 @@ class App(tk.Tk):
                 self.status.configure(text="не подключено", style="Bad.TLabel")
                 if messagebox.askyesno(APP_TITLE,
                                        "Телевизор не найден.\n\nПроверьте IP (или нажмите "
-                                       "«Найти ТВ в сети») и что на ТВ включена отладка.\n\n"
+                                       "«Найти ТВ») и что на ТВ включена отладка. На Android 11+ "
+                                       "с «Беспроводной отладкой» нужно сопряжение по коду.\n\n"
                                        "Показать, как включить отладку?"):
                     self.show_help()
         self.run_bg(work, done)
