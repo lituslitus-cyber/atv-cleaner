@@ -46,6 +46,9 @@ jobs:
           python -c "import gui, atv_cleaner"
           if (-not (Test-Path dist/ATVCleaner.exe)) { exit 1 }
           "{0:N1} МБ" -f ((Get-Item dist/ATVCleaner.exe).Length / 1MB)
+          $vi = (Get-Item dist/ATVCleaner.exe).VersionInfo
+          "Свойства exe: $($vi.ProductName) $($vi.ProductVersion), $($vi.FileDescription), $($vi.CompanyName)"
+          if (-not $vi.ProductName) { exit 1 }
 
       - uses: actions/upload-artifact@v5
         with:
